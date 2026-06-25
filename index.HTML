@@ -1,0 +1,2298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Professional Campus Attendance</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+    <style>
+        /* Premium Color Palette - Base Variables */
+        :root {
+            --bg-color: #F0F4F8; 
+            --bg-gradient-1: #E0EAFC;
+            --bg-gradient-2: #CFDEF3;
+            --surface-glass: rgba(255, 255, 255, 0.75);
+            --surface-glass-heavy: rgba(255, 255, 255, 0.95);
+            --primary: #2563EB; 
+            --dark-primary: #1D4ED8; 
+            --light-primary: rgba(37, 99, 235, 0.12); 
+            --text-main: #0F172A; 
+            --text-muted: #64748B; 
+            --border: rgba(203, 213, 225, 0.6); 
+            --border-highlight: rgba(255, 255, 255, 0.8);
+            --success: #10B981;
+            --danger: #EF4444;
+            --accent: #3B82F6; 
+            --warning: #F59E0B;
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --bar-bg: #E2E8F0;
+            --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Auto-Contrast Dark Theme Logic */
+        [data-theme="dark"] {
+            --surface-glass: rgba(15, 23, 42, 0.75);
+            --surface-glass-heavy: rgba(15, 23, 42, 0.95);
+            --text-main: #F8FAFC; 
+            --text-muted: #94A3B8; 
+            --border: rgba(51, 65, 85, 0.6); 
+            --border-highlight: rgba(255, 255, 255, 0.05);
+            --input-bg: rgba(15, 23, 42, 0.8);
+            --bar-bg: #1E293B;
+            --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- iOS & Cross-Platform Zoom/Bounce Prevention --- */
+        html, body {
+            overscroll-behavior-y: none; /* Prevents pull-to-refresh */
+            touch-action: manipulation; /* Prevents double-tap to zoom natively */
+            -webkit-text-size-adjust: 100%; /* Prevents text inflation on orientation change */
+        }
+
+        /* Forces a strict 16px minimum on all inputs to bypass Safari Auto-Zoom triggers */
+        input[type="text"], input[type="number"], input[type="password"], input[type="month"], textarea {
+            font-size: 16px !important; 
+        }
+        /* --------------------------------------------------- */
+
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Poppins', sans-serif;
+            margin: 0; padding: 0;
+            overflow: hidden; 
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.6s ease, color 0.4s ease;
+            position: relative;
+            height: 100vh;
+            height: 100dvh; 
+        }
+
+        /* Ambient Blob Background */
+        body::before {
+            content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 40%, var(--bg-gradient-1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, var(--bg-gradient-2) 0%, transparent 50%);
+            animation: bgDrift 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: -10; filter: blur(50px); opacity: 0.9;
+            transition: background 1s ease;
+        }
+        @keyframes bgDrift {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-5%, 5%) scale(1.05); }
+            100% { transform: translate(5%, -5%) scale(0.95); }
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 { margin: 0 0 10px 0; font-weight: 600; color: var(--text-main); letter-spacing: -0.5px; }
+        .label-title { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Layout */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; 
+            height: 100vh; height: 100dvh; 
+            overflow-y: auto; overflow-x: hidden;
+            opacity: 0; visibility: hidden; 
+            transform: scale(0.96) translateY(20px); filter: blur(8px);
+            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+            padding: 20px; box-sizing: border-box; 
+            padding-bottom: 115px; 
+        }
+        .screen.active { opacity: 1; visibility: visible; transform: scale(1) translateY(0); filter: blur(0); z-index: 10; }
+        .screen.exit { transform: scale(1.04) translateY(-20px); filter: blur(8px); opacity: 0; }
+
+        #splash-screen, #passcode-screen { padding-bottom: 20px !important; }
+
+        /* Splash */
+        #splash-screen { background: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999; }
+        .splash-title { color: var(--text-main); font-size: 72px; font-weight: 800; animation: splashAnim 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; text-shadow: 0 10px 30px rgba(0,0,0, 0.1); letter-spacing: -1px; }
+        .splash-subtitle { font-size: 15px; font-weight: 600; letter-spacing: 8px; color: var(--accent); text-transform: uppercase; margin-top: 8px; opacity: 0; animation: subtitleReveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards; }
+        .watermark-splash { position: absolute; bottom: 50px; color: var(--text-muted); font-size: 13px; letter-spacing: 2px; font-weight: 500; display: flex; align-items: center; gap: 8px; opacity: 0; animation: slideUpFade 1s ease-out 0.8s forwards; }
+        .watermark-splash span { color: var(--primary); font-weight: 700; letter-spacing: 3px; }
+        .watermark-persistent { position: fixed; bottom: 15px; left: 0; width: 100%; text-align: center; font-size: 11px; letter-spacing: 4px; font-weight: 600; color: var(--text-muted); z-index: 5; pointer-events: none; opacity: 0.7; }
+        
+        @keyframes splashAnim { 0% { opacity: 0; transform: scale(0.85) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes subtitleReveal { 0% { opacity: 0; filter: blur(10px); transform: translateY(10px); } 100% { opacity: 1; filter: blur(0); transform: translateY(0); } }
+        @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+        /* General UI Elements */
+        .card { background: var(--surface-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; padding: 24px; box-shadow: var(--shadow-soft); margin-bottom: 20px; border: 1px solid var(--border); border-top: 1px solid var(--border-highlight); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+
+        input[type="text"], input[type="number"], input[type="password"], input[type="month"], textarea { width: 100%; padding: 16px; margin-bottom: 20px; border-radius: 14px; border: 1px solid var(--border); outline: none; font-family: 'Poppins', sans-serif; background: var(--input-bg); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); color: var(--text-main); font-weight: 500; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        input:focus, textarea:focus { border-color: var(--primary); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 0 0 4px var(--light-primary); transform: translateY(-2px); }
+
+        .btn { background-color: var(--primary); color: white; border: none; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 15px var(--light-primary); position: relative; overflow: hidden; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--light-primary); filter: brightness(1.1); }
+        .btn:active { transform: scale(0.96) translateY(2px); box-shadow: 0 2px 8px var(--light-primary); filter: brightness(0.9); }
+        
+        .btn-outline { background: var(--surface-glass); border: 2px solid var(--border); color: var(--text-main); box-shadow: var(--shadow-soft); backdrop-filter: blur(8px); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-success { background: var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .btn-success:hover { box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4); filter: brightness(1.1); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); border: 2px solid var(--danger); color: var(--danger); box-shadow: none; }
+        .btn-danger:hover { background: var(--danger); color: white; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4); }
+        .btn-warning { background: var(--warning); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+
+        /* Custom Theme Menu Elements */
+        .theme-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        .theme-swatch { width: 100%; aspect-ratio: 1; border-radius: 12px; cursor: pointer; border: 2px solid transparent; box-shadow: var(--shadow-soft); transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .theme-swatch:active { transform: scale(0.85); }
+        .theme-swatch.active { transform: scale(1.15); border: 2px solid var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.25); z-index: 2; }
+
+        /* Navigation */
+        .bottom-nav { position: fixed; bottom: 35px; left: 20px; right: 20px; background: var(--surface-glass-heavy); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 30px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1); display: flex; justify-content: space-around; align-items: center; padding: 10px 5px; z-index: 100; border: 1px solid var(--border); border-top: 1px solid var(--border-highlight); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .bottom-nav.hidden { transform: translateY(150px); }
+        .nav-item { color: var(--text-muted); font-size: 20px; position: relative; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; flex: 1; border-radius: 20px; }
+        .nav-item:active { transform: scale(0.85); }
+        .nav-item.active { color: var(--primary); transform: translateY(-8px); }
+        .nav-item.active::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 44px; height: 44px; background: var(--light-primary); border-radius: 18px; z-index: -1; box-shadow: inset 0 0 10px rgba(255,255,255,0.2); }
+        .nav-item .nav-label { opacity: 0; font-size: 10px; font-weight: 700; position: absolute; bottom: -18px; transition: 0.3s; color: var(--primary); }
+        .nav-item.active .nav-label { opacity: 1; transform: translateY(-2px); }
+
+        /* Custom Override for Dashboard Hero */
+        .hero-card { position: relative; overflow: hidden; background: transparent; padding: 30px 20px; border: none; box-shadow: 0 20px 40px var(--light-primary); border-radius: 24px; text-align: center; color: white; z-index: 1; }
+        .hero-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--dark-primary), var(--primary)); border-radius: 24px; z-index: -2; }
+        .hero-card .shine { position: absolute; top: 0; left: -150%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent); transform: skewX(-20deg); animation: shineAnim 4s infinite cubic-bezier(0.4, 0, 0.2, 1); z-index: -1; }
+        @keyframes shineAnim { 0% { left: -150%; } 40% { left: 200%; } 100% { left: 200%; } }
+        .hero-card > * { position: relative; z-index: 1; }
+
+        .hero-stats { display: flex; justify-content: space-around; margin-top: 20px; }
+        .stat-num { font-size: 38px; font-weight: 800; display: block; text-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; line-height: 1; margin-bottom: 4px; }
+        .stat-label { font-size: 13px; opacity: 0.9; font-weight: 500; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Text Overrides */
+        .add-att-btn span { font-weight: 900 !important; font-size: 18px !important; letter-spacing: 0.5px; }
+        .add-att-title { font-weight: 900 !important; font-size: 26px !important; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Dynamic Leaderboard Cards */
+        .adj-item { display: flex; align-items: center; padding: 12px 15px; border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-soft); animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transition: all 0.3s ease; }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        .adj-rank { width: 42px; height: 42px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 16px; color: white; margin-right: 15px; flex-shrink: 0; background: linear-gradient(135deg, var(--text-muted), #475569); box-shadow: 0 4px 10px rgba(0,0,0, 0.1); }
+        .adj-rank.top-1 { background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); transform: scale(1.1); border: 2px solid white;}
+        .adj-rank.top-2 { background: linear-gradient(135deg, #94A3B8, #64748B); box-shadow: 0 4px 10px rgba(100, 116, 139, 0.3); transform: scale(1.05); border: 2px solid white;}
+        .adj-rank.top-3 { background: linear-gradient(135deg, #D97706, #92400E); box-shadow: 0 4px 10px rgba(146, 64, 14, 0.3); border: 2px solid white;}
+
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-card { background: var(--surface-glass-heavy); border: 1px solid var(--border); border-top: 1px solid var(--border-highlight); padding: 30px; border-radius: 24px; width: 85%; max-width: 380px; transform: translateY(30px) scale(0.95); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); text-align: center; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2); max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+        .alert-icon-wrapper { font-size: 48px; margin-bottom: 15px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); }
+        .icon-success { color: var(--success); } .icon-error { color: var(--danger); } .icon-info { color: var(--primary); }
+
+        /* Modules */
+        .date-selector { width: 100%; padding: 16px; margin-bottom: 20px; border-radius: 14px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-size: 16px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; box-sizing: border-box; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        .date-selector:active { transform: scale(0.98); border-color: var(--primary); }
+        .calendar-container { display: none; background: var(--surface-glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow-hover); }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: 700; font-size: 16px; }
+        .cal-btn { background: var(--light-primary); border: none; border-radius: 10px; width: 38px; height: 38px; cursor: pointer; font-size: 14px; color: var(--primary); transition: 0.2s; }
+        .cal-btn:active { transform: scale(0.85); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+        .day-name { font-size: 11px; font-weight: 700; color: var(--text-muted); padding-bottom: 8px; text-transform: uppercase; }
+        .day { padding: 10px 0; border-radius: 10px; font-size: 14px; cursor: pointer; transition: 0.2s; font-weight: 600; color: var(--text-main); }
+        .day:hover { background: var(--light-primary); }
+        .day:active { transform: scale(0.85); }
+        .day.selected { background: var(--primary); color: white; box-shadow: 0 4px 10px var(--light-primary); }
+        .day.empty { visibility: hidden; }
+
+        .period-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .period-pill { background: var(--input-bg); padding: 10px 18px; border-radius: 24px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); cursor: pointer; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); color: var(--text-muted); box-shadow: var(--shadow-soft); }
+        .period-pill:active { transform: scale(0.9); }
+        .period-pill.selected { border-color: var(--primary); background: var(--primary); color: white; box-shadow: 0 4px 15px var(--light-primary); }
+
+        .member-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); transition: transform 0.2s, padding-left 0.2s; }
+        .member-row:hover { transform: translateX(4px); padding-left: 5px; }
+        .member-index { font-weight: 700; color: var(--primary); width: 25px; display: inline-block; font-size: 14px;}
+        
+        .class-segment-block { margin-bottom: 30px; }
+        .class-segment-title { font-size: 15px; font-weight: 800; color: var(--text-main); letter-spacing: 1.5px; border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 15px; text-transform: uppercase; background: linear-gradient(90deg, var(--light-primary), transparent); border-radius: 0 8px 8px 0; padding-top: 4px; padding-bottom: 4px;}
+        .marker-two-column-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media(max-width: 480px) { .marker-two-column-grid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+
+        .dense-item { display: flex; justify-content: space-between; align-items: center; background: var(--surface-glass); padding: 12px; border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow-soft); transition: transform 0.2s; }
+        .dense-item:active { transform: scale(0.96); }
+        .dense-info { min-width: 0; flex: 1; margin-right: 8px; cursor: pointer; }
+        .dense-info h4 { margin: 0; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); }
+        .dense-info p { margin: 2px 0 0 0; font-size: 11px; font-weight: 500; color: var(--text-muted); }
+        
+        .marker-btn { width: 36px; height: 36px; border-radius: 12px; border: none; color: #FFFFFF; font-size: 14px; display: flex; justify-content: center; align-items: center; cursor: pointer; background: var(--success); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); flex-shrink: 0; }
+        .marker-btn.absent { background: var(--surface-glass); color: var(--danger); border: 2px solid var(--danger); box-shadow: none; transform: rotate(180deg); }
+        .marker-btn.excused { background: var(--warning); box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); transform: rotate(0deg); border:none; color: white;}
+        .marker-btn:active { transform: scale(0.8); }
+
+        .prog-stack-item { background: var(--surface-glass); border: 1px solid var(--border); padding: 12px 18px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; box-shadow: var(--shadow-soft); transition: 0.2s; }
+        .prog-stack-item:hover { transform: translateX(4px); border-color: var(--primary); }
+        
+        .prog-bar-container { margin-bottom: 20px; padding: 12px; border-radius: 14px; border: 1px solid transparent; transition: 0.3s; }
+        .prog-bar-container:hover { background: var(--surface-glass); border-color: var(--border); }
+        .prog-bar-container.leaderboard-relegated { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
+        .bar-labels { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .bar-bg { width: 100%; height: 12px; background: var(--bar-bg); border-radius: 6px; overflow: hidden; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .bar-fill { height: 100%; border-radius: 6px; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .prog-bar-container.leaderboard-relegated .bar-fill { background: linear-gradient(90deg, #F87171, var(--danger)); }
+        
+        .program-card { background: var(--surface-glass); border-left: 5px solid var(--primary); padding: 18px; border-radius: 16px; margin-bottom: 14px; border-top: 1px solid var(--border-highlight); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); box-shadow: var(--shadow-soft); transition: all 0.25s; }
+        .program-card:active { transform: scale(0.97); }
+        .program-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+        .relegated-card { background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2); border-left: 5px solid var(--danger); padding: 15px; border-radius: 14px; margin-bottom: 10px; }
+        .upcoming-card { background: var(--surface-glass); border: 1px solid var(--border); border-left: 5px solid #F59E0B; padding: 18px; border-radius: 16px; margin-bottom: 12px; box-shadow: var(--shadow-soft); transition: 0.25s;}
+        .upcoming-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .upcoming-date { font-size: 12px; color: #D97706; font-weight: 700; margin-bottom: 6px; display: block; letter-spacing: 0.5px;}
+        
+        .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(30px); }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .filter-row .search-wrapper { position: relative; flex: 1; min-width: 0; margin-bottom: 0; }
+        .filter-row .search-wrapper i { position: absolute; left: 18px; top: 18px; color: var(--text-muted); }
+        .filter-row .search-wrapper input { padding-left: 48px; margin-bottom: 0; border-radius: 14px; }
+        .filter-row .date-selector { padding: 16px 12px; margin-bottom: 0; width: 110px; flex-shrink: 0; border-radius: 14px; }
+        .filter-row .btn-outline { width: 50px; height: 52px; padding: 0; flex-shrink: 0; border-radius: 14px; display: flex; justify-content: center; align-items: center; margin: 0; }
+
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .4s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 30px; }
+        .key-btn { background: var(--surface-glass); border: 1px solid var(--border); border-radius: 16px; font-size: 26px; font-weight: 600; color: var(--text-main); padding: 18px 0; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: var(--shadow-soft); display: flex; justify-content: center; align-items: center; }
+        .key-btn:active { background: var(--light-primary); transform: scale(0.9); box-shadow: none; border-color: var(--primary); }
+
+        .modal-keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+        .modal-key-btn { background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; font-size: 22px; font-weight: 600; color: var(--text-main); padding: 14px 0; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-soft); display: flex; justify-content: center; align-items: center; }
+        .modal-key-btn:active { background: var(--light-primary); transform: scale(0.9); border-color: var(--primary); }
+
+        .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+        .month-btn { background: var(--input-bg); border: 1px solid var(--border); padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; color: var(--text-main); box-shadow: var(--shadow-soft); }
+        .month-btn:active { transform: scale(0.9); }
+        .month-btn.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px var(--light-primary); }
+
+        .detail-section-title { font-size: 13px; font-weight: 800; color: var(--accent); border-bottom: 2px solid var(--light-primary); padding-bottom: 6px; margin-bottom: 12px; margin-top: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        .detail-item { font-size: 13px; font-weight: 500; display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen" class="screen active">
+        <div class="splash-title">Clubs!</div>
+        <div class="splash-subtitle">Maddiverse</div>
+        <div class="watermark-splash"><i class="fa-solid fa-bolt"></i> powered by <span>maddiverse</span></div>
+    </div>
+
+    <div class="watermark-persistent">powered by maddiverse</div>
+
+    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importDataJSON(event)">
+
+    <div id="custom-alert-modal" class="modal-overlay" style="z-index: 1020;">
+        <div class="modal-card">
+            <div id="alert-icon-wrapper" class="alert-icon-wrapper"><i id="alert-icon" class="fa-solid fa-circle-info"></i></div>
+            <h3 id="alert-title" style="margin-bottom: 8px; font-size: 22px;">Notice</h3>
+            <p id="alert-desc" style="font-size: 14px; color: var(--text-muted); margin-bottom: 26px; line-height: 1.6; font-weight: 500;"></p>
+            <button class="btn" onclick="closeAlertModal()">OK</button>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="modal-overlay" style="z-index: 1015;">
+        <div class="modal-card">
+            <h3 id="modal-title" style="margin-bottom: 8px; font-size: 22px;">Confirm Action</h3>
+            <p id="modal-desc" style="font-size: 14px; color: var(--text-muted); margin-bottom: 26px; font-weight: 500;">Are you sure?</p>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-outline" style="border: 2px solid var(--border);" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" id="modal-confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="theme-modal" class="modal-overlay" style="z-index: 1010;">
+        <div class="modal-card" style="max-width: 400px; padding: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: var(--text-main);"><i class="fa-solid fa-palette" style="color: var(--primary);"></i> Theme Editor</h3>
+                <button style="background:var(--light-primary); border:none; color:var(--primary); font-size: 16px; cursor:pointer; width: 34px; height: 34px; border-radius: 10px; transition:0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'" onclick="closeThemeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="label-title" style="margin: 0;">App Brand Color</label>
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-muted);">
+                        Current <div id="current-brand-indicator" style="width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                    </div>
+                </div>
+                <div class="theme-grid" id="brand-color-grid"></div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <input type="text" id="custom-brand-hex" placeholder="#HEX" maxlength="7" style="margin-bottom: 0; padding: 12px 15px; font-weight: 700; letter-spacing: 1px; font-size: 16px;">
+                    <button class="btn btn-outline" style="width: auto; padding: 0 20px; border-width: 2px;" onclick="applyCustomBrandHex()">Apply</button>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label class="label-title" style="margin: 0;">App Background</label>
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text-muted);">
+                        Current <div id="current-bg-indicator" style="width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                    </div>
+                </div>
+                <p style="font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 0px; margin-bottom: 10px;">Text and layout adapt automatically.</p>
+                <div class="theme-grid" id="bg-color-grid"></div>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <input type="text" id="custom-bg-hex" placeholder="#HEX" maxlength="7" style="margin-bottom: 0; padding: 12px 15px; font-weight: 700; letter-spacing: 1px; font-size: 16px;">
+                    <button class="btn btn-outline" style="width: auto; padding: 0 20px; border-width: 2px;" onclick="applyCustomBgHex()">Apply</button>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <button class="btn btn-outline" style="width: 100%; border-width: 2px; color: var(--text-main); border-color: var(--border);" onclick="restoreDefaultTheme()"><i class="fa-solid fa-rotate-left"></i> Restore Default Theme</button>
+                <button class="btn" style="background: var(--bar-bg); color: var(--text-main); border: none; box-shadow: none;" onclick="closeThemeModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="recovery-modal" class="modal-overlay" style="z-index: 1025;">
+        <div class="modal-card">
+            <h3 style="margin-bottom: 5px; font-size: 20px;"><i class="fa-solid fa-life-ring" style="color: var(--primary);"></i> Reset Passcode</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px; font-weight: 500;">Enter your secret recovery word. If you haven't set one, try entering your exact Organization Name.</p>
+            <input type="password" id="recovery-word-input" placeholder="Recovery word">
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-outline" style="border-width: 2px;" onclick="closeRecoveryModal()">Cancel</button>
+                <button class="btn" onclick="processRecovery()">Reset PIN</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="change-passcode-modal" class="modal-overlay" style="z-index: 1010;">
+        <div class="modal-card">
+            <h3 style="margin-bottom: 5px; font-size: 20px;"><i class="fa-solid fa-key" style="color: var(--primary);"></i> Change Passcode</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px; font-weight: 500;">Enter a new 4 to 6 digit numeric PIN.</p>
+            <input type="password" id="modal-new-passcode" placeholder="New PIN" readonly style="text-align:center; letter-spacing: 8px; font-weight: 800; font-size: 22px; margin-bottom: 5px; caret-color: transparent; border: 2px solid var(--border);" maxlength="6">
+            
+            <label class="label-title" style="text-align:left; margin-top:10px; margin-bottom:5px;">New Recovery Word (Optional)</label>
+            <input type="password" id="modal-recovery-word" placeholder="Secret word to reset PIN" style="margin-bottom: 10px;">
+
+            <div class="modal-keypad-grid" style="margin-top: 5px;">
+                <button class="modal-key-btn" onclick="changeKeypadPress('1')">1</button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('2')">2</button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('3')">3</button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('4')">4</button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('5')">5</button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('6')">6</button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('7')">7</button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('8')">8</button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('9')">9</button>
+                <button class="modal-key-btn" style="color: var(--danger); font-size: 20px; border: none; background: rgba(239, 68, 68, 0.1);" onclick="changeKeypadBackspace()"><i class="fa-solid fa-delete-left"></i></button>
+                <button class="modal-key-btn" onclick="changeKeypadPress('0')">0</button>
+                <button class="modal-key-btn" style="background: var(--success); color: white; font-size: 20px; border: none; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);" onclick="saveNewPasscode()"><i class="fa-solid fa-check"></i></button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;"><button class="btn btn-outline" style="border-width: 2px;" onclick="closeChangePasscodeModal()">Cancel</button></div>
+        </div>
+    </div>
+
+    <div id="month-picker-modal" class="modal-overlay" style="z-index: 1010;">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <button class="cal-btn" onclick="changePickerYear(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="picker-year-display" style="font-weight: 800; font-size: 18px; color: var(--primary);">2024</span>
+                <button class="cal-btn" onclick="changePickerYear(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div class="month-grid" id="month-grid-container"></div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 25px;">
+                <button class="btn btn-outline" style="width: 100%; border-width: 2px;" onclick="closeMonthPicker()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="excuse-modal" class="modal-overlay" style="z-index: 1010;">
+        <div class="modal-card">
+            <h3 style="margin-bottom: 5px; font-size: 20px;"><i class="fa-solid fa-comment-dots" style="color: var(--warning);"></i> Mark Excused</h3>
+            <p id="excuse-member-name" style="font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 18px;"></p>
+            <textarea id="excuse-note" placeholder="Short reason for absence... (Optional)" style="width: 100%; padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; font-family: inherit; font-weight: 500; outline: none; box-sizing: border-box; resize: vertical; min-height: 100px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);"></textarea>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-outline" style="border-width: 2px;" onclick="closeExcuseModal()">Back</button>
+                <button class="btn btn-warning" onclick="saveExcuse()">Save Status</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="program-details-modal" class="modal-overlay" style="z-index: 1005;">
+        <div class="modal-card" style="max-width: 450px; width: 90%; max-height: 85vh; overflow-y: auto; text-align: left; padding: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 25px 25px 15px 25px; position: sticky; top: 0; background: var(--surface-glass-heavy); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); z-index: 2; border-radius: 24px 24px 0 0;">
+                <div style="flex: 1; padding-right: 15px;">
+                    <h2 id="pd-name" style="margin-bottom: 6px; font-size: 20px; color: var(--primary); font-weight: 800;">Program Name</h2>
+                    <div id="pd-meta" style="font-size: 12px; font-weight: 600; color: var(--text-muted);"><i class="fa-regular fa-calendar"></i> Date &middot; Periods</div>
+                </div>
+                <button style="background: var(--light-primary); border:none; color:var(--primary); font-size: 18px; cursor:pointer; width: 36px; height: 36px; border-radius: 10px; display: flex; justify-content: center; align-items: center; transition: 0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'" onclick="closeProgramDetails()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="pd-content" style="font-size: 14px; padding: 10px 25px 25px 25px;"></div>
+        </div>
+    </div>
+
+    <div id="member-profile-modal" class="modal-overlay" style="z-index: 1002;">
+        <div class="modal-card" style="max-width: 380px; max-height: 85vh; overflow-y: auto;">
+            <div id="profile-view-mode">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;">
+                    <div style="text-align: left;">
+                        <h2 id="profile-name" style="margin-bottom: 4px; font-size: 22px; color: var(--text-main); font-weight: 800;">Name</h2>
+                        <p id="profile-class" style="margin: 0; font-size: 13px; font-weight: 600; color: var(--primary);">Class - ID</p>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button style="background:var(--light-primary); border:none; color:var(--primary); font-size: 16px; cursor:pointer; width: 36px; height: 36px; border-radius: 10px; transition: 0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'" onclick="toggleEditProfile(true)"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button style="background:rgba(239, 68, 68, 0.1); border:none; color:var(--danger); font-size: 18px; cursor:pointer; width: 36px; height: 36px; border-radius: 10px; transition: 0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'" onclick="closeMemberProfile()"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <div style="flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: 16px; padding: 15px; box-shadow: var(--shadow-soft);">
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; letter-spacing: 0.5px;">Attendance</div>
+                        <div id="profile-percent" style="font-size: 26px; font-weight: 800; color: var(--primary);">0%</div>
+                    </div>
+                    <div style="flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: 16px; padding: 15px; box-shadow: var(--shadow-soft);">
+                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; letter-spacing: 0.5px;">Exact Rank</div>
+                        <div id="profile-rank" style="font-size: 26px; font-weight: 800; color: var(--accent);">#0</div>
+                    </div>
+                </div>
+
+                <div style="text-align: left; margin-bottom: 18px;">
+                    <h4 style="font-size: 14px; color: var(--success); margin-bottom: 10px; font-weight: 700;"><i class="fa-solid fa-check-circle"></i> Attended (<span id="prof-count-att">0</span>)</h4>
+                    <div id="profile-attended-list" style="max-height: 130px; overflow-y: auto; font-size: 13px; font-weight: 500; color: var(--text-muted); background: var(--input-bg); padding: 12px; border-radius: 14px; border: 1px solid var(--border); box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);"></div>
+                </div>
+
+                <div style="text-align: left; margin-bottom: 25px;">
+                    <h4 style="font-size: 14px; color: var(--danger); margin-bottom: 10px; font-weight: 700;"><i class="fa-solid fa-clock-rotate-left"></i> Missed (<span id="prof-count-miss">0</span>) &nbsp;|&nbsp; Excused (<span id="prof-count-exc">0</span>)</h4>
+                    <div id="profile-missed-list" style="max-height: 130px; overflow-y: auto; font-size: 13px; font-weight: 500; color: var(--text-muted); background: var(--input-bg); padding: 12px; border-radius: 14px; border: 1px solid var(--border); box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);"></div>
+                </div>
+                <button class="btn btn-danger" id="profile-delete-btn"><i class="fa-solid fa-user-minus"></i> Remove Member</button>
+            </div>
+
+            <div id="profile-edit-mode" style="display: none; text-align: left;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h3 style="margin: 0; color: var(--primary); font-size: 20px;"><i class="fa-solid fa-user-pen"></i> Edit Profile</h3>
+                    <button style="background:var(--light-primary); border:none; color:var(--primary); font-size: 18px; cursor:pointer; width: 36px; height: 36px; border-radius: 10px; transition: 0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'" onclick="toggleEditProfile(false)"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <label class="label-title">Full Name</label>
+                <input type="text" id="edit-mem-name">
+                <label class="label-title">Class / Department</label>
+                <input type="text" id="edit-mem-class">
+                <label class="label-title">Admission No.</label>
+                <input type="text" id="edit-mem-adm">
+                <button class="btn btn-success" style="margin-top: 15px;" onclick="saveEditedMember()"><i class="fa-solid fa-save"></i> Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="import-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-bottom: 8px; font-size: 22px;">Import Mode</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 25px; font-weight: 500;">How would you like to process this data?</p>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <button class="btn btn-danger" style="display:flex; flex-direction:column; padding:16px; gap:6px;" onclick="executeImport('reset')">
+                    <span style="font-size:16px; font-weight: 700;"><i class="fa-solid fa-rotate-left"></i> Option 1: Reset & Import</span>
+                    <span style="font-size:12px; font-weight:500; opacity:0.9;">Deletes current data, replaces entirely with backup</span>
+                </button>
+                <button class="btn btn-success" style="display:flex; flex-direction:column; padding:16px; gap:6px;" onclick="executeImport('merge')">
+                    <span style="font-size:16px; font-weight: 700;"><i class="fa-solid fa-object-group"></i> Option 2: Add to Existing</span>
+                    <span style="font-size:12px; font-weight:500; opacity:0.9;">Keeps current setup, accurately merges new programs</span>
+                </button>
+                <button class="btn btn-outline" style="border-width: 2px; margin-top:8px;" onclick="closeImportModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="passcode-screen" class="screen" style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <div class="card slide-up" style="width: 100%; max-width: 360px; text-align: center; padding: 40px 25px; background: var(--surface-glass-heavy);">
+            <div style="font-size: 48px; color: var(--primary); margin-bottom: 15px; filter: drop-shadow(0 10px 15px rgba(37,99,235,0.2));"><i class="fa-solid fa-shield-halved"></i></div>
+            <h2 style="margin-bottom: 8px; font-size: 26px;">Security Check</h2>
+            <p style="font-size: 14px; font-weight: 500; color: var(--text-muted); margin-bottom: 25px;">Enter your numeric App Passcode.</p>
+            <input type="password" id="login-passcode" placeholder="Enter PIN" readonly style="text-align:center; letter-spacing: 8px; font-weight: 800; font-size: 24px; caret-color: transparent; border: 2px solid var(--border);" maxlength="6">
+            <div class="keypad-grid" style="margin-top: 20px;">
+                <button class="key-btn" onclick="keypadPress('1')">1</button>
+                <button class="key-btn" onclick="keypadPress('2')">2</button>
+                <button class="key-btn" onclick="keypadPress('3')">3</button>
+                <button class="key-btn" onclick="keypadPress('4')">4</button>
+                <button class="key-btn" onclick="keypadPress('5')">5</button>
+                <button class="key-btn" onclick="keypadPress('6')">6</button>
+                <button class="key-btn" onclick="keypadPress('7')">7</button>
+                <button class="key-btn" onclick="keypadPress('8')">8</button>
+                <button class="key-btn" onclick="keypadPress('9')">9</button>
+                <button class="key-btn" style="color: var(--danger); font-size: 24px; border:none; background:rgba(239, 68, 68, 0.1);" onclick="keypadBackspace()"><i class="fa-solid fa-delete-left"></i></button>
+                <button class="key-btn" onclick="keypadPress('0')">0</button>
+                <button class="key-btn" style="background: var(--primary); color: white; font-size: 24px; border:none; box-shadow: 0 8px 20px var(--light-primary);" onclick="verifyPasscode(false)"><i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 25px; font-size: 13px; font-weight: 600; padding: 0 15px;">
+                <div style="color: var(--accent); cursor: pointer;" onclick="openRecoveryModal()">Forgot PIN?</div>
+                <div style="color: var(--danger); cursor: pointer;" onclick="triggerResetData()"><i class="fa-solid fa-triangle-exclamation"></i> Reset App</div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav hidden" id="main-nav">
+        <div class="nav-item active" onclick="navTo('home-screen', this)"><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></div>
+        <div class="nav-item" onclick="navTo('members-screen', this)"><i class="fa-solid fa-users"></i><span class="nav-label">Members</span></div>
+        <div class="nav-item" onclick="navTo('history-screen', this)"><i class="fa-solid fa-clock-rotate-left"></i><span class="nav-label">History</span></div>
+        <div class="nav-item" onclick="navTo('upcoming-screen', this)"><i class="fa-regular fa-calendar-check"></i><span class="nav-label">Upcoming</span></div>
+        <div class="nav-item" onclick="navTo('analytics-screen', this)"><i class="fa-solid fa-chart-pie"></i><span class="nav-label">Analytics</span></div>
+        <div class="nav-item" onclick="navTo('setup-screen', this)"><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></div>
+    </nav>
+
+    <div id="setup-screen" class="screen">
+        <div class="card slide-up">
+            <h2 style="font-size: 22px;">Campus Setup</h2>
+            <p style="font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 20px;">Configure your environment.</p>
+            
+            <label class="label-title">Organization Name</label>
+            <input type="text" id="setup-club-name" placeholder="e.g. NSS Unit">
+            
+            <label class="label-title">Total Members</label>
+            <input type="number" id="setup-total" placeholder="e.g. 60">
+            
+            <label class="label-title">Final Selection Quota Limit</label>
+            <input type="number" id="setup-limit" placeholder="Top attending limit">
+
+            <div id="initial-passcode-setup">
+                <label class="label-title"><i class="fa-solid fa-lock" style="color:var(--primary);"></i> App Passcode (Optional)</label>
+                <input type="number" id="setup-passcode" placeholder="Set 4-6 digit numeric PIN" style="margin-bottom: 10px;">
+                <label class="label-title" style="margin-top: 10px;">Recovery Word (Optional)</label>
+                <input type="password" id="setup-recovery-word" placeholder="Secret word to reset PIN" style="margin-bottom: 25px;">
+            </div>
+            
+            <button class="btn" style="font-size: 16px; padding: 18px;" onclick="saveSetup()">Save Configuration</button>
+        </div>
+
+        <div id="setup-recovery-card" class="card slide-up" style="border: 2px solid rgba(16, 185, 129, 0.3);">
+            <h3 style="color: var(--success); font-size: 18px; margin-bottom: 12px; font-weight: 700;"><i class="fa-solid fa-cloud-arrow-down"></i> Data Recovery</h3>
+            <p style="font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 18px;">Already have a backup file? Restore your data instantly without setting up a new campus.</p>
+            <button class="btn btn-outline" style="border: 2px solid var(--success); color: var(--success);" onclick="document.getElementById('import-file').click()">
+                <i class="fa-solid fa-file-import"></i> Import JSON Data
+            </button>
+        </div>
+
+        <div class="card slide-up" style="border: 1px solid var(--border);">
+            <h3 style="color: var(--text-main); font-size: 18px; margin-bottom: 15px; font-weight: 700;"><i class="fa-solid fa-palette" style="color:var(--primary);"></i> Appearance</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; font-weight: 500;">Personalize your campus app colors and background styling.</p>
+            <button class="btn btn-outline" style="border-width: 2px;" onclick="openThemeModal()"><i class="fa-solid fa-paintbrush"></i> Theme Editor</button>
+        </div>
+
+        <div id="settings-security-card" class="card slide-up" style="display: none; border-color: rgba(37, 99, 235, 0.3);">
+            <h3 style="color: var(--primary); font-size: 18px; margin-bottom: 20px; font-weight: 700;"><i class="fa-solid fa-shield"></i> Security Settings</h3>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px;">
+                <div>
+                    <span style="font-size: 15px; font-weight: 700; color: var(--text-main); display: block;">App Passcode Lock</span>
+                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Require numeric PIN on app open</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="setting-passcode-toggle" onchange="togglePasscodeStatus(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div id="change-passcode-section" style="display:none; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <button class="btn btn-outline" style="border-width: 2px;" onclick="openChangePasscodeModal()">Change Passcode</button>
+            </div>
+        </div>
+
+        <div id="settings-danger-zone" class="card slide-up" style="display: none; border: 2px solid rgba(239,68,68,0.2);">
+            <h3 style="color: var(--danger); font-size: 18px; margin-bottom: 20px; font-weight: 700;"><i class="fa-solid fa-database"></i> Data Management</h3>
+            <button class="btn btn-outline" style="margin-bottom: 15px; border: 2px solid var(--success); color: var(--success);" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-file-import"></i> Import JSON Data</button>
+            <button class="btn btn-outline" style="margin-bottom: 15px; border: 2px solid var(--text-muted); color: var(--text-main);" onclick="exportAllDataJSON()"><i class="fa-solid fa-code"></i> Export JSON Data</button>
+            <button class="btn btn-outline" style="margin-bottom: 25px; border: 2px solid var(--primary); color: var(--primary);" onclick="exportAllDataPDF()"><i class="fa-solid fa-file-pdf"></i> Export PDF Report</button>
+            <button class="btn btn-danger" onclick="triggerResetData()"><i class="fa-solid fa-triangle-exclamation"></i> Reset All Data</button>
+        </div>
+    </div>
+
+    <div id="home-screen" class="screen">
+        <div class="hero-card slide-up">
+            <div class="shine"></div>
+            <h2 id="dash-title" style="color: white; margin-bottom: 4px; font-size: 28px; font-weight: 800;">Dashboard</h2>
+            <p style="margin:0; opacity:0.9; font-size: 14px; font-weight: 500; color: white; letter-spacing: 1px; text-transform: uppercase;">Administration Portal</p>
+            
+            <div class="hero-stats">
+                <div><span class="stat-num" id="stat-members-count">0</span><span class="stat-label">Members</span></div>
+                <div><span class="stat-num" id="stat-programs-count">0</span><span class="stat-label">Conducted</span></div>
+            </div>
+        </div>
+
+        <button class="btn slide-up add-att-btn" onclick="openAddProgram()" style="padding: 18px; margin-top: 25px; margin-bottom: 25px; box-shadow: 0 8px 25px var(--light-primary);">
+            <i class="fa-solid fa-clipboard-user"></i> <span>Add Attendance</span>
+        </button>
+
+        <h3 class="slide-up" style="font-size: 18px; margin-bottom: 15px; font-weight: 700;">Planned Upcoming Programs</h3>
+        <div id="home-upcoming-list" class="slide-up"></div>
+    </div>
+
+    <div id="members-screen" class="screen">
+        <div class="card slide-up">
+            <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Enroll New Member</h2>
+            <input type="text" id="mem-name" placeholder="Student Full Name">
+            <input type="text" id="mem-class" placeholder="Class / Department (e.g. S4 CS)">
+            <input type="text" id="mem-adm" placeholder="Admission No.">
+            <button class="btn" onclick="addMember()">Add Member</button>
+        </div>
+
+        <h3 class="slide-up" style="font-size: 18px; font-weight: 700;">Enrolled Members (<span id="mem-count">0</span>)</h3>
+        <p class="slide-up" style="font-size: 12px; font-weight: 500; color: var(--text-muted); margin-top: -5px; margin-bottom: 15px;">Tap on a member row to view their individual attendance profile.</p>
+        <div class="card slide-up" style="padding: 10px 24px;">
+            <div id="members-list"></div>
+        </div>
+    </div>
+
+    <div id="history-screen" class="screen">
+        <h2 class="slide-up" style="font-size: 24px; font-weight: 800;">Program History</h2>
+        <p class="slide-up" style="font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 20px;">Search or filter conducted programs.</p>
+        
+        <div class="filter-row slide-up">
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="history-search-filter" placeholder="Search title..." oninput="handleMarkerSearch()">
+            </div>
+            <div class="date-selector" id="history-month-filter-display" onclick="openMonthPicker()">Month <i class="fa-solid fa-caret-down"></i></div>
+            <button class="btn btn-outline" style="border-width: 2px;" onclick="clearHistoryFilters()"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+
+        <div id="history-full-list" class="slide-up" style="margin-top: 15px; margin-bottom: 30px;"></div>
+    </div>
+
+    <div id="upcoming-screen" class="screen">
+        <div class="card slide-up">
+            <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px;">Plan Program</h2>
+            <input type="text" id="up-name" placeholder="Program Title">
+            <label class="label-title">Date</label>
+            <div class="date-selector" id="up-date-display" onclick="toggleCalendar('up')">Select Date <i class="fa-regular fa-calendar" style="color:var(--primary);"></i></div>
+            
+            <div class="calendar-container" id="up-calendar-container">
+                <div class="calendar-header">
+                    <button class="cal-btn" onclick="changeMonth('up', -1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <span id="cal-up-month-year"></span>
+                    <button class="cal-btn" onclick="changeMonth('up', 1)"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="day-name">Su</div><div class="day-name">Mo</div><div class="day-name">Tu</div>
+                    <div class="day-name">We</div><div class="day-name">Th</div><div class="day-name">Fr</div><div class="day-name">Sa</div>
+                </div>
+                <div class="calendar-grid" id="cal-up-days"></div>
+            </div>
+
+            <input type="text" id="up-desc" placeholder="Short Description / Objective">
+            <button class="btn" style="padding: 16px;" onclick="addUpcoming()">Save to Planned List</button>
+        </div>
+
+        <h3 class="slide-up" style="font-size: 18px; font-weight: 700; margin-top: 25px;">Upcoming Programs</h3>
+        <div id="upcoming-full-list" class="slide-up"></div>
+    </div>
+
+    <div id="add-program-screen" class="screen">
+        <div class="slide-up" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <button class="btn-outline" style="width:auto; padding: 10px 18px; border-radius: 12px; color: var(--text-main); border: 2px solid var(--border); font-weight: 600;" onclick="cancelAddProgram()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        </div>
+        <div class="card slide-up">
+            <h2 id="prog-header-title" class="add-att-title" style="color: var(--primary);">Add Attendance</h2>
+            
+            <label class="label-title" style="margin-top: 20px;">Program Title</label>
+            <input type="text" id="prog-name" placeholder="e.g. Campus Cleaning">
+
+            <label class="label-title">Date</label>
+            <div class="date-selector" id="prog-date-display" onclick="toggleCalendar('prog')">Select Date <i class="fa-regular fa-calendar" style="color:var(--primary);"></i></div>
+            
+            <div class="calendar-container" id="prog-calendar-container">
+                <div class="calendar-header">
+                    <button class="cal-btn" onclick="changeMonth('prog', -1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <span id="cal-prog-month-year"></span>
+                    <button class="cal-btn" onclick="changeMonth('prog', 1)"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="day-name">Su</div><div class="day-name">Mo</div><div class="day-name">Tu</div>
+                    <div class="day-name">We</div><div class="day-name">Th</div><div class="day-name">Fr</div><div class="day-name">Sa</div>
+                </div>
+                <div class="calendar-grid" id="cal-prog-days"></div>
+            </div>
+            
+            <label class="label-title">Conducted Periods</label>
+            <div class="period-grid" id="period-selector">
+                <div class="period-pill" onclick="this.classList.toggle('selected')">H1</div>
+                <div class="period-pill" onclick="this.classList.toggle('selected')">H2</div>
+                <div class="period-pill" onclick="this.classList.toggle('selected')">H3</div>
+                <div class="period-pill" onclick="this.classList.toggle('selected')">H4</div>
+                <div class="period-pill" onclick="this.classList.toggle('selected')">H5</div>
+                <div class="period-pill" onclick="this.classList.toggle('selected')">Holiday</div>
+            </div>
+
+            <label class="label-title" style="margin-top: 20px;">Volunteer Limit</label>
+            <input type="number" id="prog-required-count" placeholder="Expected volume (e.g. 20)">
+
+            <button class="btn" style="padding: 18px; font-size: 16px; margin-top: 10px;" onclick="startAttendance()">Proceed to Register <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <div id="marker-screen" class="screen" style="z-index: 50; background: var(--bg-color); padding: 0; display: flex; flex-direction: column;">
+        <div style="padding: 20px; padding-bottom: 0; flex-grow: 1; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button class="btn-outline" style="border:none; width:auto; padding: 12px; border-radius: 12px; background: transparent; color: var(--text-main); font-weight: 600; box-shadow: none;" onclick="cancelMarker()"><i class="fa-solid fa-arrow-left"></i> Edit Details</button>
+                <button class="btn btn-outline" style="width:auto; padding: 10px 18px; font-size:14px; border-radius:12px; border: 2px solid var(--border);" onclick="exportDraftPDF()"><i class="fa-solid fa-file-pdf" style="color:var(--danger);"></i> Export PDF</button>
+            </div>
+
+            <h2 class="add-att-title" style="margin-bottom: 4px;">Mark Attendance</h2>
+            <p class="label-title" id="marker-subtitle" style="text-transform: none; color: var(--primary); font-size: 13px;">Details</p>
+
+            <div class="search-wrapper" style="margin-top: 20px; position: relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position:absolute; left: 18px; top: 18px; color: var(--text-muted);"></i>
+                <input type="text" id="marker-search" placeholder="Search member by name or ID..." style="padding-left: 48px;" oninput="handleMarkerSearch()">
+            </div>
+
+            <p style="font-size: 11px; font-weight: 500; color: var(--text-muted); text-align: center; margin-bottom: 25px;"><i class="fa-solid fa-lightbulb" style="color:var(--warning);"></i> Tip: Long press a member's name to mark them as Excused.</p>
+
+            <div id="attendance-list" style="margin-bottom: 20px; display: flex; flex-direction: column;"></div>
+
+            <div style="flex-grow: 1;"></div>
+        </div>
+
+        <div style="position: sticky; bottom: 0; width: 100%; z-index: 100; background: var(--surface-glass-heavy); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 15px 20px 25px 20px; border-top: 1px solid var(--border-highlight); box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08); box-sizing: border-box;">
+            <button class="btn btn-success" onclick="submitAttendance()" style="padding: 16px; font-size: 16px; border-radius: 16px; width: 100%; box-shadow: 0 8px 25px rgba(16,185,129,0.3); margin: 0; font-weight: 700;"><i class="fa-solid fa-check-double"></i> Save Register</button>
+        </div>
+    </div>
+
+    <div id="analytics-screen" class="screen">
+        <h2 class="slide-up" style="margin-bottom: 25px; font-size: 26px; font-weight: 800;">Performance Analytics</h2>
+        
+        <div class="card slide-up">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 15px;">Conducted Programs List</h3>
+            <div id="analytics-prog-names"></div>
+        </div>
+
+        <div class="card slide-up">
+            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 5px;">Leaderboard</h3>
+            <p style="font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">Final Members Cutoff: <span id="quota-display" style="font-weight: 800;">0</span></p>
+            <p style="font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 20px;">Showing all active enrolled members. Entries falling outside the limit are flagged.</p>
+            <div id="analytics-bars" style="margin-top: 10px;"></div>
+        </div>
+
+        <h3 class="slide-up" style="margin-top: 30px; font-size: 16px; font-weight: 700; color: var(--danger); text-transform: uppercase; letter-spacing: 1px;"><i class="fa-solid fa-triangle-exclamation"></i> Relegated Members</h3>
+        <div id="analytics-relegated" class="slide-up" style="margin-bottom: 30px; margin-top: 15px;"></div>
+
+        <h3 class="slide-up" style="margin-top: 30px; font-size: 18px; font-weight: 800; color: var(--text-main);">Excuse considered Leaderboard</h3>
+        <p class="slide-up" style="font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 15px;">Filter rankings based on excuse rules.</p>
+        
+        <div class="slide-up" style="display:flex; gap: 8px; margin-bottom: 20px; background: var(--input-bg); padding: 6px; border-radius: 14px; border: 1px solid var(--border); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+            <button id="filter-no-exc" class="btn" style="padding: 12px; font-size: 13px; margin:0;" onclick="renderAdjustableLeaderboard(false)">Excuse (Absent)</button>
+            <button id="filter-with-exc" class="btn" style="padding: 12px; font-size: 13px; margin:0; background: transparent; color: var(--text-main); box-shadow: none;" onclick="renderAdjustableLeaderboard(true)">Excuse (Present)</button>
+        </div>
+
+        <div id="adj-leaderboard-list" class="slide-up" style="margin-bottom: 40px;"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // iOS Safari & Mobile Gesture Restrictions
+        // ==========================================
+        
+        // 1. Block physical pinch-to-zoom gestures
+        document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+        document.addEventListener('gesturechange', function (e) { e.preventDefault(); });
+        document.addEventListener('gestureend', function (e) { e.preventDefault(); });
+
+        // 2. Block double-tap to zoom specifically (bypassing interactive elements to preserve app logic)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            // Ignore if tapping a button, input, or internal app element so we don't freeze the Keypad
+            const isInteractive = event.target.tagName === 'BUTTON' || event.target.tagName === 'INPUT' || event.target.closest('.btn, .key-btn, .modal-key-btn, .nav-item, .day, .period-pill, .marker-btn');
+            
+            if (now - lastTouchEnd <= 300 && !isInteractive) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
+
+        // ==========================================
+        
+        // Database & State Initialization
+        let db = { setup: null, members: [], programs: [], upcoming: [] };
+        let currentDraft = null;
+        let isEditing = false;
+        let pendingImportData = null;
+        let currentProfileId = null;
+        
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        let state = { prog: { selected: new Date(), current: new Date() }, up: { selected: new Date(), current: new Date() } };
+        
+        let selectedFilterMonth = null; 
+        let currentPickerYear = new Date().getFullYear();
+
+        // ==========================================
+        // SAFE HAPTIC FEEDBACK UTILITY
+        // ==========================================
+        function triggerHaptic(pattern) {
+            if ('vibrate' in navigator) {
+                try {
+                    navigator.vibrate(pattern);
+                } catch (e) {
+                    console.log("Haptics blocked or unsupported by browser.");
+                }
+            }
+        }
+
+        // ==========================================
+        // DYNAMIC COLOR Engine
+        // ==========================================
+        const presetBrands = ['#2563EB', '#10B981', '#F43F5E', '#8B5CF6', '#F59E0B', '#0EA5E9', '#14B8A6', '#F97316', '#6366F1', '#EC4899'];
+        const presetBgs = ['#F0F4F8', '#FFFFFF', '#FDF6E3', '#E2E8F0', '#0B1121', '#000000', '#18181B', '#0F172A', '#1E1E2E', '#172554'];
+
+        function hexToRgb(hex) {
+            let c;
+            if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+                c= hex.substring(1).split('');
+                if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
+                c= '0x'+c.join('');
+                return { r: (c>>16)&255, g: (c>>8)&255, b: c&255 };
+            }
+            return {r:37, g:99, b:235}; 
+        }
+
+        function shadeColor(color, percent) {
+            let R = parseInt(color.substring(1,3),16);
+            let G = parseInt(color.substring(3,5),16);
+            let B = parseInt(color.substring(5,7),16);
+
+            R = parseInt(R * (100 + percent) / 100);
+            G = parseInt(G * (100 + percent) / 100);
+            B = parseInt(B * (100 + percent) / 100);
+
+            R = (R<255)?R:255; G = (G<255)?G:255; B = (B<255)?B:255;
+            R = (R>0)?R:0; G = (G>0)?G:0; B = (B>0)?B:0;
+
+            let RR = ((R.toString(16).length==1)?"0"+R.toString(16):R.toString(16));
+            let GG = ((G.toString(16).length==1)?"0"+G.toString(16):G.toString(16));
+            let BB = ((B.toString(16).length==1)?"0"+B.toString(16):B.toString(16));
+
+            return "#"+RR+GG+BB;
+        }
+
+        function getLuminance(hex) {
+            let rgb = hexToRgb(hex);
+            let r = rgb.r / 255, g = rgb.g / 255, b = rgb.b / 255;
+            r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+            g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+            b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        }
+
+        function applyColorTheme(baseHex) {
+            const root = document.documentElement;
+            const rgb = hexToRgb(baseHex);
+            const darkHex = shadeColor(baseHex, -25); 
+            const lightHex = shadeColor(baseHex, 20);  
+            
+            root.style.setProperty('--primary', baseHex);
+            root.style.setProperty('--dark-primary', darkHex);
+            root.style.setProperty('--accent', lightHex);
+            root.style.setProperty('--light-primary', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15)`);
+        }
+
+        function applyBgTheme(hex) {
+            const root = document.documentElement;
+            root.style.setProperty('--bg-color', hex);
+            
+            const isDark = getLuminance(hex) < 0.4;
+            if (isDark) {
+                root.setAttribute('data-theme', 'dark');
+                root.style.setProperty('--bg-gradient-1', shadeColor(hex, 10));
+                root.style.setProperty('--bg-gradient-2', shadeColor(hex, -5));
+            } else {
+                root.removeAttribute('data-theme');
+                root.style.setProperty('--bg-gradient-1', shadeColor(hex, -5));
+                root.style.setProperty('--bg-gradient-2', shadeColor(hex, -10));
+            }
+        }
+
+        // Custom Theme Modal UI Logic
+        function openThemeModal() {
+            renderThemeGrids();
+            document.getElementById('theme-modal').classList.add('active');
+        }
+
+        function closeThemeModal() {
+            document.getElementById('theme-modal').classList.remove('active');
+        }
+
+        function renderThemeGrids() {
+            const currentBrand = (db && db.setup && db.setup.themeColor) ? db.setup.themeColor : '#2563EB';
+            const currentBg = (db && db.setup && db.setup.bgColor) ? db.setup.bgColor : '#F0F4F8';
+            
+            document.getElementById('custom-brand-hex').value = currentBrand;
+            document.getElementById('custom-bg-hex').value = currentBg;
+            
+            const brandIndicator = document.getElementById('current-brand-indicator');
+            if (brandIndicator) brandIndicator.style.background = currentBrand;
+            
+            const bgIndicator = document.getElementById('current-bg-indicator');
+            if (bgIndicator) bgIndicator.style.background = currentBg;
+
+            const bGrid = document.getElementById('brand-color-grid');
+            bGrid.innerHTML = '';
+            presetBrands.forEach(color => {
+                const isActive = (color.toLowerCase() === currentBrand.toLowerCase());
+                bGrid.innerHTML += `<div class="theme-swatch ${isActive ? 'active' : ''}" style="background: ${color};" onclick="setBrandColor('${color}')"></div>`;
+            });
+
+            const bgGrid = document.getElementById('bg-color-grid');
+            bgGrid.innerHTML = '';
+            presetBgs.forEach(color => {
+                const isActive = (color.toLowerCase() === currentBg.toLowerCase());
+                bgGrid.innerHTML += `<div class="theme-swatch ${isActive ? 'active' : ''}" style="background: ${color}; border: 1px solid rgba(0,0,0,0.1);" onclick="setBgColor('${color}')"></div>`;
+            });
+        }
+
+        function setBrandColor(hex) {
+            document.getElementById('custom-brand-hex').value = hex;
+            applyColorTheme(hex);
+            if(db && db.setup) { db.setup.themeColor = hex; saveData(); }
+            renderThemeGrids();
+        }
+
+        function applyCustomBrandHex() {
+            let hex = document.getElementById('custom-brand-hex').value.trim();
+            if(!hex.startsWith('#')) hex = '#' + hex;
+            if(/^#[0-9A-Fa-f]{6}$/.test(hex)) setBrandColor(hex);
+            else showAlert("Invalid Hex", "Please enter a valid 6-character hex color code.", "warning");
+        }
+
+        function setBgColor(hex) {
+            document.getElementById('custom-bg-hex').value = hex;
+            applyBgTheme(hex);
+            if(db && db.setup) { db.setup.bgColor = hex; saveData(); }
+            renderThemeGrids();
+        }
+
+        function applyCustomBgHex() {
+            let hex = document.getElementById('custom-bg-hex').value.trim();
+            if(!hex.startsWith('#')) hex = '#' + hex;
+            if(/^#[0-9A-Fa-f]{6}$/.test(hex)) setBgColor(hex);
+            else showAlert("Invalid Hex", "Please enter a valid 6-character hex color code.", "warning");
+        }
+        
+        function restoreDefaultTheme() {
+            setBrandColor('#2563EB');
+            setBgColor('#F0F4F8');
+            showAlert("Theme Restored", "The default blue and white theme has been applied.", "success");
+        }
+
+        // Apply Themes on Boot asynchronously via IndexedDB
+        (async function() {
+            try {
+                let tempDb = await localforage.getItem('premiumAttendanceDB');
+                
+                // Fallback to legacy localStorage if IndexedDB is empty
+                if (!tempDb) {
+                    const localDataStr = localStorage.getItem('premiumAttendanceDB');
+                    if (localDataStr) {
+                        try { tempDb = JSON.parse(localDataStr); } catch(e) {}
+                    }
+                }
+
+                if (tempDb && tempDb.setup) {
+                    const parsedDb = typeof tempDb === 'string' ? JSON.parse(tempDb) : tempDb;
+                    if (parsedDb.setup.themeColor) applyColorTheme(parsedDb.setup.themeColor);
+                    if (parsedDb.setup.bgColor) applyBgTheme(parsedDb.setup.bgColor);
+                }
+            } catch(e) {
+                console.error("Theme boot error:", e);
+            }
+        })();
+
+        // ==========================================
+        // Modal & Standard Flow Logic
+        // ==========================================
+
+        function showAlert(title, desc, type="info") {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-desc').innerText = desc;
+            
+            const iconWrapper = document.getElementById('alert-icon-wrapper');
+            const iconEl = document.getElementById('alert-icon');
+            
+            iconWrapper.className = 'alert-icon-wrapper';
+            iconEl.className = '';
+            
+            if (type === 'error') {
+                iconWrapper.classList.add('icon-error');
+                iconEl.className = 'fa-solid fa-circle-exclamation';
+            } else if (type === 'success') {
+                iconWrapper.classList.add('icon-success');
+                iconEl.className = 'fa-solid fa-circle-check';
+            } else {
+                iconWrapper.classList.add('icon-info');
+                iconEl.className = 'fa-solid fa-circle-info';
+            }
+            
+            document.getElementById('custom-alert-modal').classList.add('active');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('custom-alert-modal').classList.remove('active');
+        }
+
+        let modalAction = null;
+        function showConfirm(title, desc, action) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = desc;
+            modalAction = action;
+            document.getElementById('custom-modal').classList.add('active');
+        }
+        function closeModal() { document.getElementById('custom-modal').classList.remove('active'); }
+        document.getElementById('modal-confirm-btn').onclick = () => { if(modalAction) modalAction(); closeModal(); };
+
+        function openImportChoiceModal(importedData) {
+            pendingImportData = importedData;
+            document.getElementById('import-modal').classList.add('active');
+        }
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.remove('active');
+            pendingImportData = null;
+            document.getElementById('import-file').value = '';
+        }
+
+        function executeImport(mode) {
+            if (!pendingImportData) return;
+
+            if (mode === 'reset') {
+                db = pendingImportData;
+                if(!db.upcoming) db.upcoming = [];
+                showAlert("Import Successful", "Data has been fully reset and imported.", "success");
+            } else if (mode === 'merge') {
+                if (!db.setup && pendingImportData.setup) {
+                    db.setup = pendingImportData.setup;
+                }
+
+                const existingMemberIds = new Set(db.members.map(m => m.id));
+                let newMembersAdded = 0;
+                
+                pendingImportData.members.forEach(m => {
+                    if (!existingMemberIds.has(m.id)) {
+                        db.members.push(m);
+                        newMembersAdded++;
+                    }
+                });
+
+                const existingUpcomingIds = new Set(db.upcoming.map(u => u.id));
+                pendingImportData.upcoming.forEach(u => {
+                    if (!existingUpcomingIds.has(u.id)) db.upcoming.push(u);
+                });
+
+                const existingProgramIds = new Set(db.programs.map(p => p.id));
+                pendingImportData.programs.forEach(p => {
+                    if (!existingProgramIds.has(p.id)) db.programs.push(p);
+                });
+
+                if(newMembersAdded > 0) {
+                    showAlert("Merge Complete", `Merged successfully! Note: ${newMembersAdded} missing member(s) were automatically imported alongside the programs to ensure analytics calculate correctly without errors.`, "info");
+                } else {
+                    showAlert("Merge Complete", "Programs merged seamlessly with existing data.", "success");
+                }
+            }
+
+            saveData();
+            populateSetup();
+            updateDashboard();
+            closeImportModal();
+            
+            document.getElementById('main-nav').classList.remove('hidden');
+            navTo('home-screen', document.querySelectorAll('.nav-item')[0]);
+        }
+
+        window.onload = async () => {
+            try {
+                // 1. Try to load from IndexedDB
+                let storedData = await localforage.getItem('premiumAttendanceDB');
+                
+                // 2. Legacy Migration Check: If IDB is empty, check localStorage
+                if (!storedData) {
+                    const legacyData = localStorage.getItem('premiumAttendanceDB');
+                    if (legacyData) {
+                        console.log("Migrating legacy data to IndexedDB...");
+                        try {
+                            storedData = JSON.parse(legacyData);
+                            await localforage.setItem('premiumAttendanceDB', storedData);
+                        } catch(e) {}
+                    }
+                }
+
+                // 3. Apply the data to the app state
+                if (storedData) {
+                    db = typeof storedData === 'string' ? JSON.parse(storedData) : storedData;
+                    if (!db.upcoming) db.upcoming = []; 
+                }
+            } catch (err) {
+                console.error("Failed to load Database:", err);
+            }
+
+            // 4. Continue with original splash screen logic
+            setTimeout(() => {
+                document.getElementById('splash-screen').classList.remove('active');
+                
+                if(!db.setup) {
+                    showScreen('setup-screen');
+                    document.getElementById('initial-passcode-setup').style.display = 'block';
+                    document.getElementById('settings-security-card').style.display = 'none';
+                    document.getElementById('settings-danger-zone').style.display = 'none';
+                    document.getElementById('setup-recovery-card').style.display = 'block';
+                } else {
+                    if(db.setup.passcodeEnabled && db.setup.passcode) {
+                        showScreen('passcode-screen');
+                    } else {
+                        document.getElementById('main-nav').classList.remove('hidden');
+                        updateDashboard();
+                        showScreen('home-screen');
+                    }
+                }
+            }, 3000);
+
+            renderCalendar('prog'); renderCalendar('up');
+            updateDateDisplay('prog'); updateDateDisplay('up');
+        };
+
+        function keypadPress(num) {
+            const input = document.getElementById('login-passcode');
+            if (input.value.length < 6) {
+                input.value += num;
+                if (input.value === db.setup.passcode) {
+                    setTimeout(() => verifyPasscode(true), 200);
+                }
+            }
+        }
+        function keypadBackspace() {
+            const input = document.getElementById('login-passcode');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function changeKeypadPress(num) {
+            const input = document.getElementById('modal-new-passcode');
+            if (input.value.length >= 6) {
+                showAlert("Limit Reached", "Passcode cannot exceed 6 digits.", "warning");
+                return;
+            }
+            input.value += num;
+        }
+        function changeKeypadBackspace() {
+            const input = document.getElementById('modal-new-passcode');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function verifyPasscode(isAuto = false) {
+            const entered = document.getElementById('login-passcode').value;
+            if(entered === db.setup.passcode) {
+                document.getElementById('login-passcode').value = '';
+                document.getElementById('main-nav').classList.remove('hidden');
+                updateDashboard();
+                navTo('home-screen', document.querySelectorAll('.nav-item')[0]);
+            } else {
+                if(!isAuto) {
+                    showAlert("Access Denied", "Incorrect passcode.", "error");
+                    document.getElementById('login-passcode').value = '';
+                }
+            }
+        }
+
+        function openRecoveryModal() {
+            document.getElementById('recovery-word-input').value = '';
+            document.getElementById('recovery-modal').classList.add('active');
+        }
+
+        function closeRecoveryModal() {
+            document.getElementById('recovery-modal').classList.remove('active');
+        }
+
+        function processRecovery() {
+            const input = document.getElementById('recovery-word-input').value.trim().toLowerCase();
+            let storedWord = db.setup.recoveryWord;
+            
+            if(!storedWord) storedWord = db.setup.name.toLowerCase();
+
+            if(input === storedWord) {
+                db.setup.passcodeEnabled = false;
+                db.setup.passcode = undefined;
+                saveData();
+                closeRecoveryModal();
+                
+                document.getElementById('login-passcode').value = '';
+                document.getElementById('main-nav').classList.remove('hidden');
+                updateDashboard();
+                populateSetup(); 
+                navTo('home-screen', document.querySelectorAll('.nav-item')[0]);
+                
+                setTimeout(() => showAlert("Passcode Removed", "Your passcode has been reset. You can set a new one in Settings.", "success"), 500);
+            } else {
+                showAlert("Access Denied", "Incorrect recovery word.", "error");
+            }
+        }
+
+        async function saveData() { 
+            try {
+                await localforage.setItem('premiumAttendanceDB', db); 
+            } catch (err) {
+                console.error("Error saving data to IndexedDB:", err);
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => {
+                if(s.classList.contains('active')) {
+                    s.classList.remove('active'); s.classList.add('exit');
+                    setTimeout(() => s.classList.remove('exit'), 400);
+                }
+            });
+            const target = document.getElementById(screenId);
+            target.classList.remove('exit'); target.classList.add('active');
+            target.scrollTop = 0;
+        }
+
+        function navTo(screenId, navElement) {
+            triggerHaptic(15); // Quick 15ms tactile pulse on every bottom menu click
+
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if(navElement) navElement.classList.add('active');
+            
+            if(screenId === 'members-screen') renderMembers();
+            if(screenId === 'history-screen') renderHistory();
+            if(screenId === 'upcoming-screen') renderUpcoming();
+            if(screenId === 'analytics-screen') renderAnalytics();
+            if(screenId === 'setup-screen') populateSetup();
+            if(screenId === 'home-screen') updateDashboard();
+            
+            showScreen(screenId);
+        }
+
+        function animateValue(id, start, end, duration) {
+            let obj = document.getElementById(id);
+            if(!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function saveSetup() {
+            const name = document.getElementById('setup-club-name').value || 'Organization';
+            const total = parseInt(document.getElementById('setup-total').value) || 0;
+            const limit = parseInt(document.getElementById('setup-limit').value) || 0;
+            
+            let passStr, isPassEnabled, recWord;
+            if(!db.setup) {
+                passStr = document.getElementById('setup-passcode').value;
+                if(passStr && !/^[0-9]{4,6}$/.test(passStr)) {
+                    return showAlert("Invalid Format", "Passcode must be a 4 to 6 digit number only.", "error");
+                }
+                isPassEnabled = passStr.length > 0;
+                recWord = document.getElementById('setup-recovery-word').value.trim().toLowerCase();
+            } else {
+                passStr = db.setup.passcode;
+                isPassEnabled = db.setup.passcodeEnabled;
+                recWord = db.setup.recoveryWord;
+            }
+
+            db.setup = {
+                name, total, limit,
+                passcode: passStr || undefined,
+                passcodeEnabled: isPassEnabled,
+                recoveryWord: recWord || (db.setup && db.setup.recoveryWord ? db.setup.recoveryWord : name.toLowerCase()),
+                themeColor: db.setup && db.setup.themeColor ? db.setup.themeColor : '#2563EB',
+                bgColor: db.setup && db.setup.bgColor ? db.setup.bgColor : '#F0F4F8'
+            };
+            
+            saveData();
+            document.getElementById('initial-passcode-setup').style.display = 'none';
+            document.getElementById('settings-danger-zone').style.display = 'block';
+            document.getElementById('settings-security-card').style.display = 'block';
+            document.getElementById('setup-recovery-card').style.display = 'none';
+            
+            populateSetup();
+            
+            document.getElementById('main-nav').classList.remove('hidden');
+            updateDashboard();
+            navTo('home-screen', document.querySelectorAll('.nav-item')[0]);
+        }
+
+        function populateSetup() {
+            if(!db.setup) return;
+            document.getElementById('setup-club-name').value = db.setup.name;
+            document.getElementById('setup-total').value = db.setup.total;
+            document.getElementById('setup-limit').value = db.setup.limit;
+            
+            document.getElementById('initial-passcode-setup').style.display = 'none';
+            document.getElementById('settings-danger-zone').style.display = 'block';
+            document.getElementById('setup-recovery-card').style.display = 'none';
+            
+            const secCard = document.getElementById('settings-security-card');
+            secCard.style.display = 'block';
+            document.getElementById('setting-passcode-toggle').checked = db.setup.passcodeEnabled || false;
+            
+            if(db.setup.passcodeEnabled) {
+                document.getElementById('change-passcode-section').style.display = 'block';
+            } else {
+                document.getElementById('change-passcode-section').style.display = 'none';
+            }
+        }
+
+        function togglePasscodeStatus(isEnabled) {
+            if(isEnabled && !db.setup.passcode) {
+                showAlert("Setup Required", "Please create a new numeric passcode.", "info");
+                document.getElementById('setting-passcode-toggle').checked = false;
+                openChangePasscodeModal();
+                return;
+            }
+            db.setup.passcodeEnabled = isEnabled;
+            if(isEnabled) {
+                document.getElementById('change-passcode-section').style.display = 'block';
+            } else {
+                document.getElementById('change-passcode-section').style.display = 'none';
+            }
+            saveData();
+            showAlert("Security Updated", isEnabled ? "App passcode lock enabled." : "App passcode lock disabled.", "success");
+        }
+        
+        function openChangePasscodeModal() {
+            document.getElementById('modal-new-passcode').value = '';
+            document.getElementById('modal-recovery-word').value = '';
+            document.getElementById('change-passcode-modal').classList.add('active');
+        }
+
+        function closeChangePasscodeModal() {
+            document.getElementById('change-passcode-modal').classList.remove('active');
+        }
+
+        function saveNewPasscode() {
+            const newPass = document.getElementById('modal-new-passcode').value;
+            const newRec = document.getElementById('modal-recovery-word').value.trim().toLowerCase();
+            const regex = /^[0-9]{4,6}$/;
+            if(!regex.test(newPass)) {
+                return showAlert("Invalid Format", "Passcode must be a 4 to 6 digit number only.", "error");
+            }
+            db.setup.passcode = newPass;
+            db.setup.passcodeEnabled = true;
+            if (newRec) db.setup.recoveryWord = newRec;
+            
+            document.getElementById('setting-passcode-toggle').checked = true;
+            document.getElementById('change-passcode-section').style.display = 'block';
+            saveData();
+            closeChangePasscodeModal();
+            showAlert("Success", "Passcode updated successfully.", "success");
+        }
+
+        function exportAllDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+            const node = document.createElement('a');
+            node.setAttribute("href", dataStr); node.setAttribute("download", "maddiverse_attendance_backup.json");
+            document.body.appendChild(node); node.click(); node.remove();
+        }
+
+        function importDataJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (importedData && importedData.setup !== undefined && Array.isArray(importedData.members) && Array.isArray(importedData.programs)) {
+                        openImportChoiceModal(importedData);
+                    } else {
+                        showAlert("Import Failed", "Invalid backup format. Please select a valid Maddiverse Attendance JSON file.", "error");
+                    }
+                } catch (error) {
+                    showAlert("Import Failed", "Error reading file. Ensure it is an uncorrupted JSON backup.", "error");
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function exportAllDataPDF() {
+            if (!db.setup) return showAlert("Action Blocked", "Campus setup is not complete. Please configure your settings first.", "error");
+            if (db.programs.length === 0) return showAlert("Export Error", "No programs conducted yet. Add attendance data to generate a report.", "error");
+            
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(11, 37, 69);
+            doc.text(`${db.setup.name} Complete Program Report`, 14, 20);
+            
+            doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(89, 115, 147);
+            doc.text(`Total Programs Conducted: ${db.programs.length}`, 14, 29);
+
+            const programTableData = [];
+            db.programs.forEach((p, i) => {
+                let present = Object.values(p.attendance).filter(Boolean).length;
+                let hours = p.periods.length ? p.periods.join(', ') : 'Standard';
+                let targetVol = p.requiredCount ? p.requiredCount : 'N/A';
+                programTableData.push([i + 1, p.name, p.date, `${present} / ${db.members.length}`, hours, targetVol]);
+            });
+
+            const rgb = db.setup.themeColor ? hexToRgb(db.setup.themeColor) : {r: 37, g: 99, b: 235};
+
+            doc.autoTable({ startY: 36, head: [['#', 'Program Name', 'Date', 'Attendance', 'Hours Details', 'Target']], body: programTableData, theme: 'grid', headStyles: { fillColor: [rgb.r, rgb.g, rgb.b] } });
+
+            let currentY = doc.lastAutoTable.finalY + 15;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(11, 37, 69);
+            doc.text(`Member Leaderboard`, 14, currentY);
+            
+            let stats = db.members.map(m => {
+                let pCount = 0; db.programs.forEach(p => { if(p.attendance[m.id]) pCount++; });
+                return { ...m, pCount, percent: ((pCount / db.programs.length) * 100).toFixed(0) };
+            });
+            stats.sort((a, b) => b.pCount - a.pCount);
+
+            const leaderData = stats.map((s, i) => {
+                const zone = (i + 1 > db.setup.limit) ? 'Relegated' : 'Within Quota';
+                return [i + 1, s.name, s.class, `${s.pCount} / ${db.programs.length} (${s.percent}%)`, zone];
+            });
+            
+            doc.autoTable({ startY: currentY + 6, head: [['Rank', 'Student Name', 'Class/Dept', 'Attendance Rate', 'Selection Status']], body: leaderData, theme: 'striped', headStyles: { fillColor: [rgb.r, rgb.g, rgb.b] } });
+
+            currentY = doc.lastAutoTable.finalY + 18;
+
+            if (currentY > doc.internal.pageSize.getHeight() - 35) { doc.addPage(); currentY = 25; }
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(rgb.r, rgb.g, rgb.b);
+            doc.text(`Complete Program Details`, 14, currentY);
+            currentY += 10;
+
+            const sortedPrograms = [...db.programs].sort((a, b) => parseDateString(a.date) - parseDateString(b.date));
+
+            sortedPrograms.forEach((p, pIndex) => {
+                if (currentY > doc.internal.pageSize.getHeight() - 45) { doc.addPage(); currentY = 25; }
+
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(11, 37, 69);
+                doc.text(`${pIndex + 1}. ${p.name}`, 14, currentY);
+                currentY += 6;
+
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(89, 115, 147);
+                let hours = p.periods.length ? p.periods.join(', ') : 'Standard';
+                let attCount = Object.values(p.attendance).filter(Boolean).length;
+                let targetCountStr = p.requiredCount ? p.requiredCount : 'N/A';
+                doc.text(`Date: ${p.date}  |  Conducted Hour: ${hours}  |  Present: ${attCount}  |  Volunteer Limit: ${targetCountStr}`, 14, currentY);
+                currentY += 6;
+
+                const sortedMembers = [...db.members].sort((a, b) => a.class.localeCompare(b.class));
+                let attendeeRows = []; let excusedRows = []; let attendeeCounter = 0;
+                
+                sortedMembers.forEach(m => {
+                    if (p.attendance[m.id]) { 
+                        attendeeCounter++; attendeeRows.push([attendeeCounter, m.name, m.class, m.adm]); 
+                    } else if (p.excuses && p.excuses[m.id]) {
+                        excusedRows.push([m.name, m.class, p.excuses[m.id]]);
+                    }
+                });
+
+                doc.autoTable({ startY: currentY, head: [['Sl. No.', 'Name of Member', 'Class', 'Admission Number']], body: attendeeRows, theme: 'grid', headStyles: { fillColor: [15, 23, 42] }, margin: { left: 14, right: 14 } });
+                currentY = doc.lastAutoTable.finalY + 8;
+
+                if (excusedRows.length > 0) {
+                    doc.setFont('helvetica', 'italic'); doc.setFontSize(10); doc.setTextColor(245, 158, 11);
+                    doc.text("Excused Absences:", 14, currentY);
+                    doc.autoTable({ startY: currentY + 3, head: [['Name', 'Class', 'Excuse Note']], body: excusedRows, theme: 'plain', styles: { fontSize: 9, textColor: [89, 115, 147] }, margin: { left: 14, right: 14 } });
+                    currentY = doc.lastAutoTable.finalY + 8;
+                }
+
+                if (pIndex < sortedPrograms.length - 1) {
+                    if (currentY > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); currentY = 25; } 
+                    else {
+                        doc.setDrawColor(203, 213, 225); doc.setLineWidth(1.5);
+                        doc.line(14, currentY, doc.internal.pageSize.getWidth() - 14, currentY);
+                        currentY += 12;
+                    }
+                }
+            });
+
+            addWatermarkToPDF(doc); doc.save(`Complete_Program_Report.pdf`);
+        }
+
+        function triggerResetData() {
+            showConfirm("Reset Application", "Are you absolutely sure you want to RESET ALL DATA? This will permanently delete your records.", async () => {
+                
+                // Remove from both IndexedDB and legacy localStorage
+                await localforage.removeItem('premiumAttendanceDB');
+                localStorage.removeItem('premiumAttendanceDB'); 
+                
+                db = { setup: null, members: [], programs: [], upcoming: [] };
+                
+                document.documentElement.removeAttribute('data-theme');
+                document.documentElement.style.removeProperty('--bg-color');
+                applyColorTheme('#2563EB');
+                
+                document.getElementById('setup-club-name').value = '';
+                document.getElementById('setup-total').value = '';
+                document.getElementById('setup-limit').value = '';
+                document.getElementById('setup-passcode').value = '';
+                document.getElementById('login-passcode').value = '';
+                
+                document.getElementById('initial-passcode-setup').style.display = 'block';
+                document.getElementById('settings-danger-zone').style.display = 'none';
+                document.getElementById('settings-security-card').style.display = 'none';
+                document.getElementById('setup-recovery-card').style.display = 'block';
+                document.getElementById('main-nav').classList.add('hidden');
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                showScreen('setup-screen');
+            });
+        }
+
+        function addMember() {
+            const name = document.getElementById('mem-name').value.trim();
+            let clsInput = document.getElementById('mem-class').value.trim();
+            const cls = clsInput ? clsInput.toUpperCase() : 'N/A';
+            const adm = document.getElementById('mem-adm').value.trim() || '-';
+            
+            if(!name) return showAlert("Missing Information", "Student Name is required to enroll a new member.", "error");
+            
+            db.members.push({ id: Date.now().toString(), name, class: cls, adm });
+            saveData();
+            document.getElementById('mem-name').value = ''; document.getElementById('mem-class').value = ''; document.getElementById('mem-adm').value = '';
+            renderMembers();
+        }
+
+        function renderMembers() {
+            const list = document.getElementById('members-list'); list.innerHTML = '';
+            const sorted = [...db.members].sort((a,b) => a.class.localeCompare(b.class));
+            sorted.forEach((m, index) => {
+                list.innerHTML += `
+                    <div class="member-row" style="cursor:pointer;" onclick="openMemberProfile('${m.id}')">
+                        <div><span class="member-index">${index + 1}.</span> <span style="font-weight: 600;">${m.name}</span></div>
+                        <div style="text-align: right; font-size: 11px; font-weight: 500; color: var(--text-muted); display:flex; align-items:center; gap:10px;">
+                            <div><div>${m.class}</div><div>ID: ${m.adm}</div></div>
+                            <i class="fa-solid fa-chevron-right" style="color:var(--primary); font-size:14px; padding-left:8px;"></i>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('mem-count').innerText = db.members.length;
+        }
+
+        function toggleEditProfile(isEdit) {
+            document.getElementById('profile-view-mode').style.display = isEdit ? 'none' : 'block';
+            document.getElementById('profile-edit-mode').style.display = isEdit ? 'block' : 'none';
+        }
+
+        function openMemberProfile(id) {
+            currentProfileId = id;
+            const member = db.members.find(m => m.id === id);
+            if(!member) return;
+            
+            document.getElementById('edit-mem-name').value = member.name;
+            document.getElementById('edit-mem-class').value = member.class !== 'N/A' ? member.class : '';
+            document.getElementById('edit-mem-adm').value = member.adm !== '-' ? member.adm : '';
+
+            toggleEditProfile(false);
+            document.getElementById('profile-name').innerText = member.name;
+            document.getElementById('profile-class').innerText = `${member.class} | ID: ${member.adm}`;
+            
+            let attendedCount = 0;
+            let excusedCount = 0;
+            let absentCount = 0;
+            
+            let attendedHtml = '';
+            let missedHtml = '';
+            
+            db.programs.forEach(p => {
+                const isExcused = p.excuses && p.excuses[id];
+                const isPresent = p.attendance[id];
+                const excuseBadge = isExcused ? `<span style="display:inline-block; margin-left:8px; background:var(--warning); color:white; font-size:10px; padding:2px 6px; border-radius:6px; font-weight: 700;">Excused</span>` : '';
+                
+                const row = `
+                    <div style="padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items: center;">
+                        <div style="color:var(--text-main); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%;">${p.name}${excuseBadge}</div>
+                        <div style="flex-shrink:0;">${p.date}</div>
+                    </div>`;
+                    
+                if (isPresent) {
+                    attendedCount++;
+                    attendedHtml += row;
+                } else if (isExcused) {
+                    excusedCount++;
+                    missedHtml += row;
+                } else {
+                    absentCount++;
+                    missedHtml += row;
+                }
+            });
+            
+            // Explicit Counters Update
+            document.getElementById('prof-count-att').innerText = attendedCount;
+            document.getElementById('prof-count-miss').innerText = absentCount;
+            document.getElementById('prof-count-exc').innerText = excusedCount;
+            
+            const totalPrograms = db.programs.length;
+            const percent = totalPrograms === 0 ? 0 : Math.round((attendedCount / totalPrograms) * 100);
+            document.getElementById('profile-percent').innerText = `${percent}%`;
+            
+            let stats = db.members.map(m => {
+                let pCount = 0;
+                db.programs.forEach(p => { if(p.attendance[m.id]) pCount++; });
+                return { id: m.id, count: pCount };
+            });
+            stats.sort((a,b) => b.count - a.count);
+            const rankIndex = stats.findIndex(s => s.id === id);
+            document.getElementById('profile-rank').innerText = totalPrograms === 0 ? "-" : `#${rankIndex + 1}`;
+            
+            const attendedListEl = document.getElementById('profile-attended-list');
+            const missedListEl = document.getElementById('profile-missed-list');
+            
+            if (totalPrograms === 0) {
+                attendedListEl.innerHTML = `<div style="text-align: center; padding: 10px;">No programs conducted yet.</div>`;
+                missedListEl.innerHTML = `<div style="text-align: center; padding: 10px;">No programs conducted yet.</div>`;
+            } else {
+                attendedListEl.innerHTML = attendedHtml || `<div style="text-align: center; padding: 10px; color: var(--text-muted);">No programs attended.</div>`;
+                missedListEl.innerHTML = missedHtml || `<div style="text-align: center; padding: 10px; color: var(--success); font-weight: 700;"><i class="fa-solid fa-star"></i> Perfect attendance!</div>`;
+            }
+            
+            document.getElementById('profile-delete-btn').onclick = () => { triggerDeleteMember(id, member.name); };
+            
+            document.getElementById('member-profile-modal').classList.add('active');
+        }
+
+        function saveEditedMember() {
+            const name = document.getElementById('edit-mem-name').value.trim();
+            let clsInput = document.getElementById('edit-mem-class').value.trim();
+            const cls = clsInput ? clsInput.toUpperCase() : 'N/A';
+            const adm = document.getElementById('edit-mem-adm').value.trim() || '-';
+            
+            if(!name) return showAlert("Missing Information", "Student Name is required.", "error");
+
+            const member = db.members.find(m => m.id === currentProfileId);
+            if(member) {
+                member.name = name;
+                member.class = cls;
+                member.adm = adm;
+                saveData();
+                renderMembers();
+                openMemberProfile(currentProfileId); 
+                showAlert("Success", "Member profile updated successfully.", "success");
+            }
+        }
+
+        function closeMemberProfile() {
+            document.getElementById('member-profile-modal').classList.remove('active');
+        }
+
+        function triggerDeleteMember(id, name) {
+            closeMemberProfile();
+            setTimeout(() => {
+                showConfirm("Remove Enrolled Member", `Are you sure you want to delete ${name} from the active campus roster?`, () => {
+                    db.members = db.members.filter(m => m.id !== id); 
+                    saveData(); 
+                    renderMembers(); 
+                });
+            }, 400); 
+        }
+
+        function updateDashboard() {
+            if (!db.setup) return;
+            document.getElementById('dash-title').innerText = db.setup.name;
+            animateValue("stat-members-count", 0, db.members.length, 1000);
+            animateValue("stat-programs-count", 0, db.programs.length, 1000);
+            
+            const homeList = document.getElementById('home-upcoming-list'); homeList.innerHTML = '';
+            if(db.upcoming.length === 0) { homeList.innerHTML = `<p style="font-size:14px; font-weight: 500; color:var(--text-muted);">No planned programs.</p>`; } 
+            else {
+                db.upcoming.slice(0, 3).forEach(u => {
+                    homeList.innerHTML += `<div class="upcoming-card"><span class="upcoming-date"><i class="fa-regular fa-calendar"></i> ${u.date}</span><h4 style="font-size:15px; font-weight:700; margin-bottom:4px; color:var(--text-main);">${u.name}</h4><p style="margin:0; font-size:12px; font-weight: 500; color:var(--text-muted);">${u.desc}</p></div>`;
+                });
+            }
+        }
+
+        function toggleCalendar(type) {
+            const cal = document.getElementById(`${type}-calendar-container`);
+            cal.style.display = cal.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function changeMonth(type, dir) { state[type].current.setMonth(state[type].current.getMonth() + dir); renderCalendar(type); }
+
+        function renderCalendar(type) {
+            state[type].current.setDate(1);
+            const month = state[type].current.getMonth(); const year = state[type].current.getFullYear();
+            document.getElementById(`cal-${type}-month-year`).innerText = `${monthNames[month]} ${year}`;
+            
+            const firstDayIndex = state[type].current.getDay();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            const daysGrid = document.getElementById(`cal-${type}-days`); daysGrid.innerHTML = '';
+            
+            for(let x = 0; x < firstDayIndex; x++) daysGrid.innerHTML += `<div class="day empty"></div>`;
+            for(let i = 1; i <= lastDay; i++) {
+                const isSelected = state[type].selected.getDate() === i && state[type].selected.getMonth() === month && state[type].selected.getFullYear() === year;
+                daysGrid.innerHTML += `<div class="day ${isSelected ? 'selected' : ''}" onclick="selectDate('${type}', ${i}, ${month}, ${year})">${i}</div>`;
+            }
+        }
+
+        function selectDate(type, d, m, y) { state[type].selected = new Date(y, m, d); renderCalendar(type); updateDateDisplay(type); toggleCalendar(type); }
+
+        function updateDateDisplay(type) {
+            const d = state[type].selected;
+            const formatted = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+            const displayEl = document.getElementById(`${type}-date-display`);
+            if(displayEl) displayEl.innerHTML = `${formatted} <i class="fa-solid fa-pen"></i>`;
+            return formatted;
+        }
+
+        function openMonthPicker() {
+            document.getElementById('picker-year-display').innerText = currentPickerYear;
+            renderMonthGrid();
+            document.getElementById('month-picker-modal').classList.add('active');
+        }
+
+        function closeMonthPicker() {
+            document.getElementById('month-picker-modal').classList.remove('active');
+        }
+
+        function changePickerYear(dir) {
+            currentPickerYear += dir;
+            document.getElementById('picker-year-display').innerText = currentPickerYear;
+            renderMonthGrid();
+        }
+
+        function renderMonthGrid() {
+            const grid = document.getElementById('month-grid-container');
+            grid.innerHTML = '';
+            const shortMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            
+            shortMonths.forEach((m, index) => {
+                const isSelected = selectedFilterMonth === `${currentPickerYear}-${String(index + 1).padStart(2, '0')}`;
+                grid.innerHTML += `<button class="month-btn ${isSelected ? 'selected' : ''}" onclick="selectFilterMonth(${index + 1})">${m}</button>`;
+            });
+        }
+
+        function selectFilterMonth(monthIndex) {
+            selectedFilterMonth = `${currentPickerYear}-${String(monthIndex).padStart(2, '0')}`;
+            document.getElementById('history-month-filter-display').innerHTML = `${monthNames[monthIndex-1].substring(0,3)} ${currentPickerYear} <i class="fa-solid fa-caret-down"></i>`;
+            closeMonthPicker();
+            renderHistory();
+        }
+
+        function clearHistoryFilters() {
+            document.getElementById('history-search-filter').value = '';
+            selectedFilterMonth = null;
+            document.getElementById('history-month-filter-display').innerHTML = 'Month <i class="fa-solid fa-caret-down"></i>';
+            renderHistory();
+        }
+
+        function parseDateString(dateStr) { const parts = dateStr.split('/'); if(parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]).getTime(); return 0; }
+
+        function addUpcoming() {
+            const name = document.getElementById('up-name').value; const desc = document.getElementById('up-desc').value;
+            if(!name) return showAlert("Missing Information", "Program Title is required to plan a program.", "error");
+            
+            const dateStr = updateDateDisplay('up');
+            db.upcoming.push({ id: Date.now().toString(), name, date: dateStr, desc });
+            db.upcoming.sort((a,b) => parseDateString(a.date) - parseDateString(b.date));
+            saveData(); document.getElementById('up-name').value = ''; document.getElementById('up-desc').value = ''; renderUpcoming();
+        }
+
+        function renderUpcoming() {
+            const list = document.getElementById('upcoming-full-list'); list.innerHTML = '';
+            if(db.upcoming.length === 0) { list.innerHTML = `<p style="color:var(--text-muted); font-size:13px; font-weight: 500;">No programs planned.</p>`; return; }
+            db.upcoming.forEach(u => {
+                list.innerHTML += `<div class="upcoming-card" style="display:flex; justify-content:space-between; align-items:center;"><div><span class="upcoming-date">${u.date}</span><h4 style="font-size:16px; font-weight: 700; margin-bottom:4px; color:var(--text-main);">${u.name}</h4><p style="margin:0; font-size:12px; font-weight: 500; color:var(--text-muted);">${u.desc}</p></div><button onclick="deleteUpcoming('${u.id}')" style="background:transparent; border:none; color:var(--danger); font-size:18px; padding:10px; cursor: pointer; transition: 0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'"><i class="fa-solid fa-trash"></i></button></div>`;
+            });
+        }
+        
+        function deleteUpcoming(id) { showConfirm("Remove Planned Program", "Do you want to remove this from your planned list?", () => { db.upcoming = db.upcoming.filter(u => u.id !== id); saveData(); renderUpcoming(); }); }
+
+        function openAddProgram() {
+            isEditing = false; currentDraft = null;
+            document.getElementById('prog-name').value = ''; document.getElementById('prog-required-count').value = '';
+            document.getElementById('prog-header-title').innerText = "Add Attendance";
+            document.querySelectorAll('.period-pill').forEach(p => p.classList.remove('selected'));
+            
+            state.prog.selected = new Date(); state.prog.current = new Date();
+            renderCalendar('prog'); updateDateDisplay('prog');
+            document.getElementById('prog-calendar-container').style.display = 'none';
+            document.getElementById('main-nav').classList.add('hidden');
+            showScreen('add-program-screen');
+        }
+
+        function editProgram(progId) {
+            isEditing = true; const prog = db.programs.find(p => p.id === progId);
+            currentDraft = JSON.parse(JSON.stringify(prog)); 
+            
+            document.getElementById('prog-name').value = prog.name; document.getElementById('prog-required-count').value = prog.requiredCount || '';
+            document.getElementById('prog-header-title').innerText = "Edit Attendance";
+            
+            const parts = prog.date.split('/');
+            if(parts.length === 3) { state.prog.selected = new Date(parts[2], parts[1]-1, parts[0]); state.prog.current = new Date(state.prog.selected); }
+            renderCalendar('prog'); updateDateDisplay('prog');
+            document.getElementById('prog-calendar-container').style.display = 'none';
+
+            document.querySelectorAll('.period-pill').forEach(p => {
+                if(prog.periods.includes(p.innerText)) p.classList.add('selected'); else p.classList.remove('selected');
+            });
+
+            document.getElementById('main-nav').classList.add('hidden');
+            showScreen('add-program-screen');
+        }
+
+        function cancelAddProgram() { document.getElementById('main-nav').classList.remove('hidden'); navTo('home-screen', document.querySelectorAll('.nav-item')[0]); }
+
+        function startAttendance() {
+            if(db.members.length === 0) return showAlert("Action Blocked", "Roster is empty. Please add members before registering attendance.", "error");
+            
+            const name = document.getElementById('prog-name').value;
+            if(!name) return showAlert("Missing Information", "Program Title is required to start taking attendance.", "error");
+            
+            const periods = Array.from(document.querySelectorAll('.period-pill.selected')).map(p => p.innerText);
+            const dateStr = updateDateDisplay('prog');
+            const targetReqCount = parseInt(document.getElementById('prog-required-count').value) || 0;
+
+            if(isEditing && currentDraft) {
+                currentDraft.name = name; currentDraft.date = dateStr; currentDraft.periods = periods; currentDraft.requiredCount = targetReqCount;
+                if(!currentDraft.excuses) currentDraft.excuses = {};
+            } else {
+                currentDraft = { id: Date.now().toString(), date: dateStr, name, limit: db.setup.limit, periods, requiredCount: targetReqCount, attendance: {}, excuses: {} };
+                db.members.forEach(m => currentDraft.attendance[m.id] = false);
+            }
+
+            const targetLabel = targetReqCount ? ` &nbsp;|&nbsp; <i class="fa-solid fa-bullseye"></i> Vol Limit: ${targetReqCount}` : '';
+            document.getElementById('marker-subtitle').innerHTML = `<i class="fa-regular fa-calendar"></i> ${dateStr} &nbsp;|&nbsp; <i class="fa-regular fa-clock"></i> ${periods.length ? periods.join(', ') : 'All Day'}${targetLabel}`;
+            
+            document.getElementById('marker-search').value = ''; renderMarkerList(""); showScreen('marker-screen');
+        }
+
+        let pressTimer;
+        let currentExcuseMemberId = null;
+
+        function startPress(e, id, nameStr) {
+            pressTimer = setTimeout(() => {
+                openExcuseModal(id, nameStr);
+            }, 600); 
+        }
+
+        function cancelPress() {
+            clearTimeout(pressTimer);
+        }
+
+        function openExcuseModal(id, name) {
+            currentExcuseMemberId = id;
+            document.getElementById('excuse-member-name').innerText = name;
+            document.getElementById('excuse-note').value = (currentDraft.excuses && currentDraft.excuses[id]) ? currentDraft.excuses[id] : '';
+            document.getElementById('excuse-modal').classList.add('active');
+            triggerHaptic(40); // 40ms drag pulse for long press action
+        }
+
+        function closeExcuseModal() {
+            document.getElementById('excuse-modal').classList.remove('active');
+            currentExcuseMemberId = null;
+        }
+
+        function saveExcuse() {
+            if(!currentDraft.excuses) currentDraft.excuses = {};
+            const note = document.getElementById('excuse-note').value.trim();
+            if(note) {
+                currentDraft.excuses[currentExcuseMemberId] = note;
+                currentDraft.attendance[currentExcuseMemberId] = false; 
+            } else {
+                currentDraft.excuses[currentExcuseMemberId] = "Excused";
+                currentDraft.attendance[currentExcuseMemberId] = false;
+            }
+            closeExcuseModal();
+            handleMarkerSearch(); 
+        }
+
+        function handleMarkerSearch() { renderMarkerList(document.getElementById('marker-search').value.toLowerCase().trim()); }
+
+        function renderMarkerList(filterQuery = "") {
+            const list = document.getElementById('attendance-list'); list.innerHTML = '';
+            const filteredMembers = db.members.filter(m => {
+                if(!filterQuery) return true;
+                return m.name.toLowerCase().includes(filterQuery) || m.adm.toLowerCase().includes(filterQuery) || m.class.toLowerCase().includes(filterQuery);
+            });
+
+            if(filteredMembers.length === 0) { list.innerHTML = `<p style="text-align:center; padding:20px; font-size:13px; font-weight:500; color:var(--text-muted);">No members matched selection criteria.</p>`; return; }
+
+            const groups = {}; filteredMembers.forEach(m => { if(!groups[m.class]) groups[m.class] = []; groups[m.class].push(m); });
+
+            Object.keys(groups).sort().forEach(className => {
+                const segmentBlock = document.createElement('div'); segmentBlock.className = 'class-segment-block';
+                segmentBlock.innerHTML = `<div class="class-segment-title">${className}</div>`;
+                const gridContainer = document.createElement('div'); gridContainer.className = 'marker-two-column-grid';
+
+                groups[className].sort((a,b) => a.name.localeCompare(b.name)).forEach(m => {
+                    const isPresent = currentDraft.attendance[m.id];
+                    const isExcused = currentDraft.excuses && currentDraft.excuses[m.id];
+                    
+                    let btnClass = isPresent ? '' : 'absent';
+                    let btnIcon = isPresent ? 'fa-check' : 'fa-xmark';
+                    
+                    if(!isPresent && isExcused) {
+                        btnClass = 'excused';
+                        btnIcon = 'fa-comment-dots';
+                    }
+
+                    const safeName = m.name.replace(/'/g, "\\'");
+
+                    gridContainer.innerHTML += `
+                        <div class="dense-item" oncontextmenu="return false;">
+                            <div class="dense-info" 
+                                onmousedown="startPress(event, '${m.id}', '${safeName}')" 
+                                onmouseup="cancelPress()" 
+                                onmouseleave="cancelPress()" 
+                                ontouchstart="startPress(event, '${m.id}', '${safeName}')" 
+                                ontouchend="cancelPress()"
+                                ontouchcancel="cancelPress()">
+                                <h4>${m.name}</h4><p>ID: ${m.adm}</p>
+                            </div>
+                            <button class="marker-btn ${btnClass}" onclick="toggleStatus(this, '${m.id}')">
+                                <i class="fa-solid ${btnIcon}"></i>
+                            </button>
+                        </div>`;
+                });
+                segmentBlock.appendChild(gridContainer); list.appendChild(segmentBlock);
+            });
+        }
+
+        function toggleStatus(btn, memberId) {
+            currentDraft.attendance[memberId] = !currentDraft.attendance[memberId];
+            if(currentDraft.attendance[memberId]) { 
+                if(currentDraft.excuses) delete currentDraft.excuses[memberId];
+                btn.className = 'marker-btn'; btn.innerHTML = '<i class="fa-solid fa-check"></i>'; 
+                triggerHaptic(15); // Quick 15ms pulse for successful "Present" click
+            } else { 
+                btn.className = 'marker-btn absent'; btn.innerHTML = '<i class="fa-solid fa-xmark"></i>'; 
+                triggerHaptic([15, 60, 15]); // Distinct double-pulse for "Absent"
+            }
+        }
+
+        function cancelMarker() { showScreen('add-program-screen'); }
+
+        function submitAttendance() {
+            if(isEditing) { const index = db.programs.findIndex(p => p.id === currentDraft.id); if(index > -1) db.programs[index] = currentDraft; } 
+            else { db.programs.push(currentDraft); }
+            saveData(); document.getElementById('main-nav').classList.remove('hidden');
+            if(isEditing) navTo('history-screen', document.querySelectorAll('.nav-item')[2]); else navTo('home-screen', document.querySelectorAll('.nav-item')[0]);
+            isEditing = false; currentDraft = null;
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-full-list');
+            const filterText = document.getElementById('history-search-filter').value.toLowerCase().trim();
+            list.innerHTML = '';
+            
+            let filtered = [...db.programs].reverse().filter(p => {
+                if(selectedFilterMonth) {
+                    const parts = p.date.split('/');
+                    if(parts.length === 3) {
+                        const pMonth = `${parts[2]}-${parts[1]}`;
+                        if(pMonth !== selectedFilterMonth) return false;
+                    }
+                }
+                if(filterText) {
+                    if(!p.name.toLowerCase().includes(filterText)) return false;
+                }
+                return true;
+            });
+
+            if(filtered.length === 0) { list.innerHTML = `<p style="font-size:13px; font-weight: 500; color:var(--text-muted); text-align:center; padding: 20px;">No programs found matching criteria.</p>`; return; }
+            
+            filtered.forEach(p => {
+                let attCount = Object.values(p.attendance).filter(Boolean).length;
+                let excusedCount = p.excuses ? Object.keys(p.excuses).length : 0;
+                let absentCount = db.members.length - attCount - excusedCount;
+                
+                let targetDisplay = p.requiredCount ? `<br><i class="fa-solid fa-bullseye"></i> Vol Limit: ${p.requiredCount}` : '';
+                
+                list.innerHTML += `
+                    <div class="program-card"><div style="display:flex; justify-content:space-between;">
+                        <div style="flex:1; min-width:0; padding-right:15px; cursor:pointer;" onclick="openProgramDetails('${p.id}')">
+                            <span class="label-title" style="margin-bottom:4px; color:var(--accent); font-size: 11px;">${p.date}</span>
+                            <h4 style="margin: 0; font-size: 16px; font-weight: 700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</h4>
+                            <div style="font-size: 12px; font-weight: 500; color: var(--text-muted); margin-top: 6px; line-height: 1.5;">
+                                <i class="fa-solid fa-users"></i> Present: ${attCount} | Excused: ${excusedCount} | Absent: ${absentCount}<br>
+                                <i class="fa-regular fa-clock"></i> ${p.periods.length ? p.periods.join(', ') : 'All Day'}${targetDisplay}
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; justify-content: space-between; width: 44px; flex-shrink:0; gap: 8px;">
+                            <button style="background:var(--light-primary); border:none; color:var(--primary); width:100%; height:34px; border-radius:10px; cursor:pointer; transition:0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'" onclick="editProgram('${p.id}'); event.stopPropagation();"><i class="fa-solid fa-pen"></i></button>
+                            <button style="background:transparent; border:1px solid var(--border); color:var(--text-main); width:100%; height:34px; border-radius:10px; cursor:pointer; transition:0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'" onclick="exportSavedPDF('${p.id}'); event.stopPropagation();"><i class="fa-solid fa-download"></i></button>
+                            <button style="background:rgba(239, 68, 68, 0.1); border:none; color:var(--danger); width:100%; height:34px; border-radius:10px; cursor:pointer; transition:0.2s;" onmousedown="this.style.transform='scale(0.85)'" onmouseup="this.style.transform='scale(1)'" onclick="deleteProgram('${p.id}'); event.stopPropagation();"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div></div>`;
+            });
+        }
+
+        function openProgramDetails(progId) {
+            const prog = db.programs.find(p => p.id === progId);
+            if(!prog) return;
+
+            document.getElementById('pd-name').innerText = prog.name;
+            document.getElementById('pd-meta').innerHTML = `<i class="fa-regular fa-calendar"></i> ${prog.date} &nbsp;&middot;&nbsp; <i class="fa-regular fa-clock"></i> ${prog.periods.length ? prog.periods.join(', ') : 'All Day'}`;
+
+            let presentByClass = {};
+            let excused = [];
+            let absent = [];
+
+            db.members.forEach(m => {
+                if(prog.attendance[m.id]) {
+                    if(!presentByClass[m.class]) presentByClass[m.class] = [];
+                    presentByClass[m.class].push(m);
+                } else if(prog.excuses && prog.excuses[m.id]) {
+                    excused.push({ member: m, note: prog.excuses[m.id] });
+                } else {
+                    absent.push(m);
+                }
+            });
+
+            let contentHtml = '';
+
+            contentHtml += `<div class="detail-section-title"><i class="fa-solid fa-check"></i> Present Attendees</div>`;
+            if(Object.keys(presentByClass).length === 0) {
+                contentHtml += `<div style="text-align:center; font-weight:500; color:var(--text-muted); padding:10px 0;">No attendees present.</div>`;
+            } else {
+                Object.keys(presentByClass).sort().forEach(cls => {
+                    contentHtml += `<div style="font-weight: 800; color: var(--text-main); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">${cls}</div>`;
+                    presentByClass[cls].sort((a,b)=>a.name.localeCompare(b.name)).forEach(m => {
+                        contentHtml += `<div class="detail-item"><span>${m.name}</span><span style="color:var(--text-muted); font-size:11px;">ID: ${m.adm}</span></div>`;
+                    });
+                });
+            }
+
+            contentHtml += `<div class="detail-section-title" style="color:var(--warning); border-color: rgba(245, 158, 11, 0.2);"><i class="fa-solid fa-comment-dots"></i> Excused</div>`;
+            if(excused.length === 0) {
+                contentHtml += `<div style="text-align:center; font-weight:500; color:var(--text-muted); padding:10px 0;">No one excused.</div>`;
+            } else {
+                excused.sort((a,b)=>a.member.name.localeCompare(b.member.name)).forEach(e => {
+                    contentHtml += `<div class="detail-item" style="flex-direction:column; align-items:flex-start;">
+                        <div style="display:flex; justify-content:space-between; width:100%;"><span style="font-weight:600;">${e.member.name} (${e.member.class})</span><span style="color:var(--text-muted); font-size:11px;">ID: ${e.member.adm}</span></div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px; font-style:italic;">Note: ${e.note}</div>
+                    </div>`;
+                });
+            }
+
+            contentHtml += `<div class="detail-section-title" style="color:var(--danger); border-color: rgba(239, 68, 68, 0.2);"><i class="fa-solid fa-xmark"></i> Absent</div>`;
+            if(absent.length === 0) {
+                contentHtml += `<div style="text-align:center; font-weight:500; color:var(--text-muted); padding:10px 0;">No one absent.</div>`;
+            } else {
+                absent.sort((a,b)=>a.class.localeCompare(b.class) || a.name.localeCompare(b.name)).forEach(m => {
+                    contentHtml += `<div class="detail-item"><span>${m.name} <span style="color:var(--text-muted); font-size:10px;">(${m.class})</span></span><span style="color:var(--text-muted); font-size:11px;">ID: ${m.adm}</span></div>`;
+                });
+            }
+
+            document.getElementById('pd-content').innerHTML = contentHtml;
+            document.getElementById('program-details-modal').classList.add('active');
+        }
+
+        function closeProgramDetails() {
+            document.getElementById('program-details-modal').classList.remove('active');
+        }
+
+        // --- NEW DYNAMIC LEADERBOARD LOGIC ---
+        function renderAdjustableLeaderboard(withExcuse) {
+            const btnNo = document.getElementById('filter-no-exc');
+            const btnWith = document.getElementById('filter-with-exc');
+            
+            if(withExcuse) {
+                btnWith.style.background = 'var(--primary)';
+                btnWith.style.color = 'white';
+                btnWith.style.boxShadow = '0 4px 15px var(--light-primary)';
+                btnWith.style.border = '1px solid transparent';
+                
+                btnNo.style.background = 'transparent';
+                btnNo.style.color = 'var(--text-main)';
+                btnNo.style.boxShadow = 'none';
+                btnNo.style.border = '1px solid transparent';
+            } else {
+                btnNo.style.background = 'var(--primary)';
+                btnNo.style.color = 'white';
+                btnNo.style.boxShadow = '0 4px 15px var(--light-primary)';
+                btnNo.style.border = '1px solid transparent';
+                
+                btnWith.style.background = 'transparent';
+                btnWith.style.color = 'var(--text-main)';
+                btnWith.style.boxShadow = 'none';
+                btnWith.style.border = '1px solid transparent';
+            }
+
+            const list = document.getElementById('adj-leaderboard-list');
+            list.innerHTML = '';
+
+            if (db.programs.length === 0 || db.members.length === 0) {
+                list.innerHTML = `<p style="font-size:13px; color:var(--text-muted); text-align:center;">No data to analyze.</p>`;
+                return;
+            }
+
+            let stats = db.members.map(m => {
+                let pCount = 0;
+                db.programs.forEach(p => { 
+                    if(p.attendance[m.id]) {
+                        pCount++;
+                    } else if (withExcuse && p.excuses && p.excuses[m.id]) {
+                        pCount++; // Excused acts as present
+                    }
+                });
+                return { ...m, count: pCount, percent: ((pCount / db.programs.length) * 100).toFixed(0) };
+            });
+
+            stats.sort((a,b) => b.count - a.count);
+
+            stats.forEach((s, index) => {
+                let rank = index + 1;
+                let isRelegated = rank > db.setup.limit;
+                let rankClass = rank <= 3 ? `adj-rank top-${rank}` : 'adj-rank';
+                let rankLabel = rank <= 3 ? `<i class="fa-solid fa-trophy" style="font-size:14px;"></i>` : rank;
+                
+                // Animation delay limit to prevent extreme delays on long lists
+                let delay = Math.min(index * 0.05, 0.5); 
+                
+                let bgColor = isRelegated ? 'rgba(239, 68, 68, 0.05)' : 'var(--surface-glass)';
+                let borderColor = isRelegated ? 'rgba(239, 68, 68, 0.3)' : 'var(--border)';
+                let nameColor = isRelegated ? 'var(--danger)' : 'var(--text-main)';
+                let statColor = isRelegated ? 'var(--danger)' : 'var(--primary)';
+                let percentColor = isRelegated ? 'var(--danger)' : 'var(--success)';
+                let rankStyle = isRelegated && rank > 3 ? 'background: var(--danger); box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); color: white; border: none;' : '';
+
+                let html = `
+                    <div class="adj-item" style="animation-delay: ${delay}s; background: ${bgColor}; border-color: ${borderColor};">
+                        <div class="${rankClass}" style="${rankStyle}">${rankLabel}</div>
+                        <div style="flex-grow:1; min-width:0;">
+                            <h4 style="margin:0; font-size:15px; font-weight:700; color:${nameColor}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.name}</h4>
+                            <p style="margin:0; font-size:12px; color:var(--text-muted); font-weight:500;">${s.class}</p>
+                        </div>
+                        <div style="text-align:right; flex-shrink:0;">
+                            <div style="font-weight:800; font-size:18px; color:${statColor}; line-height:1;">${s.count} <span style="font-size:12px; color:var(--text-muted); font-weight:600;">/ ${db.programs.length}</span></div>
+                            <div style="font-size:12px; font-weight:700; color:${percentColor}; margin-top:2px;">${s.percent}%</div>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += html;
+            });
+        }
+
+        function renderAnalytics() {
+            if (!db.setup) return;
+            document.getElementById('quota-display').innerText = db.setup.limit;
+            const pStack = document.getElementById('analytics-prog-names'); const bars = document.getElementById('analytics-bars');
+            const relegated = document.getElementById('analytics-relegated');
+            
+            pStack.innerHTML = ''; bars.innerHTML = ''; relegated.innerHTML = '';
+
+            // Boot secondary leaderboard defaulting to false (strict mode)
+            renderAdjustableLeaderboard(false);
+
+            if(db.programs.length === 0) { bars.innerHTML = "<p style='font-size:13px; font-weight: 500; color:var(--text-muted);'>No metrics collected yet.</p>"; return; }
+
+            db.programs.forEach((p, i) => {
+                let targetInfo = p.requiredCount ? ` <span style="font-size:10px; background:var(--light-primary); padding:2px 6px; border-radius:6px;">Vol Limit: ${p.requiredCount}</span>` : '';
+                pStack.innerHTML += `<div class="prog-stack-item"><span style="color:var(--text-main); font-weight:700;">${i+1}. ${p.name}${targetInfo}</span> <span style="color:var(--text-muted);">${p.date}</span></div>`;
+            });
+
+            let stats = db.members.map(m => {
+                let pCount = 0; db.programs.forEach(p => { if(p.attendance[m.id]) pCount++; });
+                return { ...m, presentCount: pCount, percentage: ((pCount / db.programs.length) * 100).toFixed(0) };
+            });
+
+            stats.sort((a, b) => b.presentCount - a.presentCount);
+
+            stats.forEach((s, i) => {
+                const rank = i + 1; const isRelegated = rank > db.setup.limit;
+                const allocationClass = isRelegated ? 'leaderboard-relegated' : '';
+                const quotaBadge = isRelegated ? `<span style="color:var(--danger); font-size:10px; font-weight:700; padding-left:8px;">[OUT OF QUOTA]</span>` : '';
+
+                bars.innerHTML += `
+                    <div class="prog-bar-container ${allocationClass}">
+                        <div class="bar-labels"><span><span style="color:var(--primary);">#${rank}</span> ${s.name} <small style="color:var(--text-muted);">(${s.class})</small> ${quotaBadge}</span><span>${s.presentCount} / ${db.programs.length}</span></div>
+                        <div class="bar-bg"><div class="bar-fill" style="width: ${s.percentage}%;"></div></div>
+                    </div>`;
+
+                if(isRelegated) {
+                    relegated.innerHTML += `
+                        <div class="relegated-card"><div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div><h4 style="margin:0; font-size:15px; font-weight:700; color:var(--text-main);">${s.name}</h4><span style="font-size:12px; font-weight:500; color:var(--text-muted);">${s.class}</span></div>
+                            <div style="text-align:right;"><div style="font-weight:800; font-size:16px; color:var(--danger);">${s.presentCount} / ${db.programs.length} (${s.percentage}%)</div><div style="font-size:11px; font-weight:600; color:var(--text-muted);">Rank #${rank}</div></div>
+                        </div></div>`;
+                }
+            });
+
+            if(relegated.innerHTML === '') relegated.innerHTML = `<p style="font-size:13px; font-weight: 500; color:var(--text-muted); background: var(--surface-glass); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">All enrolled campus members fall within defined selection criteria constraints.</p>`;
+
+            setTimeout(() => document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.style.width), 50);
+        }
+
+        function deleteProgram(id) { 
+            showConfirm("Delete Record", "Are you sure you want to permanently delete this program's attendance data?", () => { 
+                db.programs = db.programs.filter(p => p.id !== id); 
+                saveData(); 
+                
+                let activeScreen = Array.from(document.querySelectorAll('.screen')).find(s => s.classList.contains('active'));
+                if(activeScreen && activeScreen.id === 'history-screen') {
+                    renderHistory();
+                } else {
+                    renderAnalytics(); 
+                }
+            }); 
+        }
+
+        function addWatermarkToPDF(doc) { const pageCount = doc.internal.getNumberOfPages(); for(let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.setFontSize(10); doc.setTextColor(148, 163, 184); doc.text("powered by maddiverse", doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' }); } }
+
+        function exportDraftPDF() { if(currentDraft) generatePDF(currentDraft); }
+        function exportSavedPDF(progId) { const prog = db.programs.find(p => p.id === progId); if(prog) generatePDF(prog); }
+
+        function generatePDF(prog) {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(11, 37, 69); doc.text(`${db.setup.name} - Attendance Report`, 14, 20);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(89, 115, 147);
+            doc.text(`Program: ${prog.name}`, 14, 30); doc.text(`Date: ${prog.date}`, 14, 36);
+            
+            let hours = prog.periods.length ? prog.periods.join(', ') : 'Standard';
+            let targetRequirement = prog.requiredCount ? prog.requiredCount : 'N/A';
+            doc.text(`Time Configuration: ${hours}  |  Volunteer Limit Volume: ${targetRequirement}`, 14, 42);
+
+            const tableData = []; let excusedData = []; const sortedMembers = [...db.members].sort((a,b) => a.class.localeCompare(b.class));
+            let presentTotal = 0;
+            sortedMembers.forEach(m => { 
+                if(prog.attendance[m.id]) { 
+                    presentTotal++; tableData.push([presentTotal, m.name, m.class, m.adm]); 
+                } else if(prog.excuses && prog.excuses[m.id]) {
+                    excusedData.push([m.name, m.class, prog.excuses[m.id]]);
+                }
+            });
+
+            doc.text(`Total Present Volume Registered: ${presentTotal} / ${db.members.length}`, 14, 48);
+
+            const rgb = db.setup.themeColor ? hexToRgb(db.setup.themeColor) : {r: 37, g: 99, b: 235};
+
+            doc.autoTable({ startY: 55, head: [['#', 'Student Name', 'Class/Dept', 'Admission No']], body: tableData, theme: 'striped', headStyles: { fillColor: [rgb.r, rgb.g, rgb.b] } });
+            
+            if(excusedData.length > 0) {
+                let yPos = doc.lastAutoTable.finalY + 10;
+                if (yPos > doc.internal.pageSize.getHeight() - 30) { doc.addPage(); yPos = 20; }
+                doc.setFont('helvetica', 'italic'); doc.setFontSize(11); doc.setTextColor(245, 158, 11);
+                doc.text("Excused Absences:", 14, yPos);
+                doc.autoTable({ startY: yPos + 5, head: [['Name', 'Class', 'Excuse Note']], body: excusedData, theme: 'plain', styles: { fontSize: 10, textColor: [89, 115, 147] } });
+            }
+
+            addWatermarkToPDF(doc); doc.save(`${prog.name}_Attendance.pdf`);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                if (e.target.tagName.toLowerCase() === 'input') {
+                    e.target.blur(); 
+                }
+            }
+        });
+    </script>
+</body>
+</html>
