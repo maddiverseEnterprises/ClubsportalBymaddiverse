@@ -1555,7 +1555,7 @@
         }
 
         function addMember() {
-            const name = document.getElementById('mem-name').value.trim();
+            const name = document.getElementById('mem-name').value.trim().toUpperCase();
             let clsInput = document.getElementById('mem-class').value.trim();
             const cls = clsInput ? clsInput.toUpperCase() : 'N/A';
             const adm = document.getElementById('mem-adm').value.trim() || '-';
@@ -1667,7 +1667,7 @@
         }
 
         function saveEditedMember() {
-            const name = document.getElementById('edit-mem-name').value.trim();
+            const name = document.getElementById('edit-mem-name').value.trim().toUpperCase();
             let clsInput = document.getElementById('edit-mem-class').value.trim();
             const cls = clsInput ? clsInput.toUpperCase() : 'N/A';
             const adm = document.getElementById('edit-mem-adm').value.trim() || '-';
